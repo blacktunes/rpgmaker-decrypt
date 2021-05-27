@@ -3,13 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="user-scalable=no" />
-    <link rel="stylesheet" type="text/css" href="css/main.css" />
-    <link rel="stylesheet" type="text/css" href="css/animation.css" />
+    <link rel="stylesheet" type="text/css" href="style/main.css" />
+    <link rel="stylesheet" type="text/css" href="style/animation.css" />
     <script src="js/libs/vue.min.js"></script>
-    <title>TEST</title>
+    <title>RMMV DECRYPT</title>
   </head>
-  <body style="background-color: black">
-    <div id="app">{{msg}}</div>
+  <body style="background-color: #fff">
+    <div id="app">
+      <div style="display: flex; align-items: center;">
+        <button @click="selectDir">加载</button>
+        <button @click="selectOutDir">输出目录</button>
+        <div style="display: flex; align-items: center;cursor: pointer;border: 1px solid #000;padding-right: 2px;" @click="changeCheck">
+          <input type="checkbox" v-model="autoOutDir" />
+          <div>输出到游戏目录</div>
+        </div>
+      </div>
+      <p>游戏名: {{gameTitle}}</p>
+      <p>游戏目录: {{basePath}}</p>
+      <p>输出目录: {{outPath}}</p>
+      <p>加密密钥: {{encryptionKey}}</p>
+      <p>加密图片数: {{imgList.length}}</p>
+      <p>加密音频数: {{audioList.length}}</p>
+      <button @click="startDecrypt">解密</button>
+      <p>进度: {{progress}}/{{imgList.length + audioList.length}}</p>
+    </div>
     <script type="text/javascript" src="js/vue_main.js"></script>
   </body>
 </html>

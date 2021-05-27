@@ -1,0 +1,14 @@
+{
+  "name": "rm-decrypt",
+  "version": "0.0.1",
+  "description": "RPGMakerMV加密资源解密工具",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Blacktunes",
+  "devDependencies": {
+    "electron": "^13.0.1",
+    "electron-packager": "^15.2.0"
+  }
+}

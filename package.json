@@ -1,9 +1,18 @@
 {
   "name": "rmmv-decrypt",
+  "version": "0.0.1",
   "description": "RPGMakerMV加密资源解密工具",
+  "main": "main.js",
   "author": "Blacktunes",
   "scripts": {
-    "start": "cd src && yarn start",
-    "dist": "cd src && yarn dist"
+    "start": "electron .",
+    "dist": "electron-packager . rmmv-decrypt --overwrite --asar --out=../dist"
+  },
+  "devDependencies": {
+    "electron": "^13.0.1",
+    "electron-packager": "^15.2.0"
+  },
+  "dependencies": {
+    "fs-extra": "^10.0.0"
   }
 }

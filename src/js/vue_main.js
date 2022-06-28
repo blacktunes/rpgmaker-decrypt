@@ -13,7 +13,11 @@ var app = new Vue({
     audioList: [],
     basePath: '',
     outPath: '',
-    autoOutDir: false
+    autoOutDir: false,
+    path: null,
+    imgPreview: false,
+    img: '',
+    index: -1
   }),
   methods: {
     reset() {
@@ -21,21 +25,37 @@ var app = new Vue({
       this.encryptionKey = ''
       this.imgList = []
       this.basePath = ''
+      this.path = null
+      this.imgPreview = false
+      this.img = ''
+      this.index = -1
     },
     selectDir() {
-      this.reset()
-
       electron.ipcRenderer.invoke('select-dir')
         .then(res => {
           if (!res.canceled) {
+            this.reset()
             this.basePath = res.filePaths[0]
             this.setOutDir()
+            this.path = this.checkDir()
+
+            if (!this.path) return
+
             if (this.readSystem()) {
               this.readImg()
-              this.readAudio()
+              // this.readAudio()
             }
           }
         })
+    },
+    checkDir() {
+      if (fs.existsSync(path.join(this.basePath, 'www/data/System.json'))) {
+        return 'www/'
+      }
+      if (fs.existsSync(path.join(this.basePath, 'data/System.json'))) {
+        return '/'
+      }
+      return null
     },
     selectOutDir() {
       electron.ipcRenderer.invoke('select-out-dir')
@@ -51,7 +71,7 @@ var app = new Vue({
       this.setOutDir()
     },
     readSystem() {
-      const systemPath = path.join(this.basePath, 'www/data/System.json')
+      const systemPath = path.join(this.basePath, this.path, 'data/System.json')
       let flag = false
       if (fs.existsSync(systemPath)) {
         const system = require(systemPath)
@@ -66,12 +86,12 @@ var app = new Vue({
       return flag
     },
     readImg() {
-      this.imgList = this.readDir(path.join(this.basePath, 'www/img')).filter(item => {
-        return item.endsWith('.rpgmvp')
+      this.imgList = this.readDir(path.join(this.basePath, this.path, 'img')).filter(item => {
+        return (item.endsWith('.rpgmvp') || item.endsWith('.png_'))
       })
     },
     readAudio() {
-      this.audioList = this.readDir(path.join(this.basePath, 'www/audio')).filter(item => {
+      this.audioList = this.readDir(path.join(this.basePath, this.path, 'audio')).filter(item => {
         return (item.endsWith('.rpgmvo') || item.endsWith('.rpgmvm'))
       })
     },
@@ -113,15 +133,38 @@ var app = new Vue({
 
       arrayBuffer = arrayBuffer.slice(this.headerlength)
       const encryptionKey = this.encryptionKey.split(/(.{2})/).filter(Boolean)
-      var view = new DataView(arrayBuffer);
+      const view = new DataView(arrayBuffer)
       if (arrayBuffer) {
-        var byteArray = new Uint8Array(arrayBuffer);
+        const byteArray = new Uint8Array(arrayBuffer)
         for (i = 0; i < this.headerlength; i++) {
-          byteArray[i] = byteArray[i] ^ parseInt(encryptionKey[i], 16);
-          view.setUint8(i, byteArray[i]);
+          byteArray[i] = byteArray[i] ^ parseInt(encryptionKey[i], 16)
+          view.setUint8(i, byteArray[i])
         }
       }
-      return view;
+      return view
+    },
+    decryptArrayBufferMz(source) {
+      const header = new Uint8Array(source, 0, 16)
+      const headerHex = Array.from(header, x => x.toString(16)).join(",")
+      if (headerHex !== "52,50,47,4d,56,0,0,0,0,3,1,0,0,0,0,0") {
+        throw new Error("Decryption error")
+      }
+      const body = source.slice(16)
+      const view = new DataView(body)
+      const key = this.encryptionKey.match(/.{2}/g)
+      for (let i = 0; i < 16; i++) {
+        view.setUint8(i, view.getUint8(i) ^ parseInt(key[i], 16))
+      }
+      return body
+    },
+    toBase64(buffer) {
+      return new Promise(resolve => {
+        const file = new FileReader()
+        file.onload = (e) => {
+          resolve(e.target.result)
+        }
+        file.readAsDataURL(new Blob([buffer]))
+      })
     },
     readDir(entry) {
       let list = []
@@ -137,6 +180,33 @@ var app = new Vue({
       })
       return list
     },
+    async previweImg(index) {
+      this.img = ''
+      this.index = -1
+      const img = fs.readFileSync(this.imgList[index]).buffer
+      let temp
+      if (this.imgList[index].endsWith('_')) {
+        temp = this.decryptArrayBufferMz(img)
+      } else {
+        temp = this.decryptArrayBuffer(img)
+      }
+      this.img = await this.toBase64(temp)
+      this.index = index
+    },
+    preIndex() {
+      const temp = this.index - 1
+      if (temp >= 0) {
+        this.previweImg(temp)
+        window.location.hash = temp
+      }
+    },
+    nextIndex() {
+      const temp = this.index + 1
+      if (temp <= this.imgList.length - 1) {
+        this.previweImg(temp)
+        window.location.hash = temp
+      }
+    },
     setOutDir() {
       if (this.autoOutDir) {
         if (this.basePath) {
@@ -150,6 +220,15 @@ var app = new Vue({
   },
   created() {
     this.setOutDir()
+    document.addEventListener('keydown', e => {
+      if (!this.imgPreview) return
+      if (e.keyCode === 37) {
+        this.preIndex()
+      }
+      if (e.keyCode === 39) {
+        this.nextIndex()
+      }
+    })
   },
   mounted() {
     setTimeout(() => {

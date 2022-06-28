@@ -29,7 +29,7 @@ function createWindow() {
     show: false,
     width: 500,
     height: 420,
-    resizable: false,
+    // resizable: false,
     // frame: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

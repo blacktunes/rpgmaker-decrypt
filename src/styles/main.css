@@ -1,0 +1,32 @@
+.checkBox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border: 1px solid #000;
+  padding-right: 2px;
+}
+
+.img-list-box {
+  margin-top: 10px;
+  width: calc(100vw - 30px);
+  height: 100px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  border: 1px solid;
+}
+
+.img-preview {
+  max-width: 100%;
+  margin-top: 10px;
+}
+
+.item {
+  padding: 5px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.hightlight {
+  background: #000;
+  color: #fff;
+}

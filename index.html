@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="user-scalable=no" />
+  <link rel="stylesheet" type="text/css" href="src/styles/main.css" />
+  <link rel="stylesheet" type="text/css" href="src/styles/animation.css" />
+  <script src="src/js/libs/vue.min.js"></script>
+  <title>RMMV DECRYPT</title>
+</head>
+
+<body style="background-color: #fff">
+  <div id="app">
+    <div style="display: flex; align-items: center;">
+      <button @click="selectDir">加载</button>
+      <button v-if="!imgPreview" @click="selectOutDir">输出目录</button>
+      <div v-if="!imgPreview" class="checkBox" @click="changeCheck">
+        <input type="checkbox" v-model="autoOutDir" />
+        <div>输出到游戏目录</div>
+      </div>
+      <div v-if="imgList.length > 0" class="checkBox" @click="() => imgPreview = !imgPreview">
+        <input type="checkbox" v-model="imgPreview" />
+        <div>图片预览</div>
+      </div>
+    </div>
+    <template v-if="!imgPreview">
+      <p>游戏名: {{gameTitle}}</p>
+      <p>游戏目录: {{basePath}}</p>
+      <p>输出目录: {{outPath}}</p>
+      <p>加密密钥: {{encryptionKey}}</p>
+      <p>加密图片数: {{imgList.length}}</p>
+      <!-- <p>加密音频数: {{audioList.length}}</p> -->
+      <template v-if="imgList.length > 0">
+        <button @click="startDecrypt">解密</button>
+        <p>进度: {{progress}}/{{imgList.length + audioList.length}}</p>
+      </template>
+    </template>
+    <template v-else>
+      <div class="img-list-box">
+        <div v-for="(url, _index) in imgList" :key="_index" :id="_index" @click="previweImg(_index)" class="item"
+          :class="{ hightlight: index === _index }">
+          {{url}}
+        </div>
+      </div>
+      <img class="img-preview" :src="img">
+    </template>
+  </div>
+  <script type="text/javascript" src="src/js/vue_main.js"></script>
+</body>
+
+</html>

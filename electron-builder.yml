@@ -1,0 +1,13 @@
+# https://www.electron.build/configuration/configuration
+asar: true
+directories:
+  output: 'release/${productName}_${version}'
+files:
+  - dist
+  - dist-electron
+win:
+  target:
+    - target: 7z
+      arch:
+        - x64
+  artifactName: '${productName}_${version}.${ext}'

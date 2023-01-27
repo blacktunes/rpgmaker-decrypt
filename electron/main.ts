@@ -2,13 +2,62 @@ process.env.DIST = join(__dirname, '../dist')
 process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST, '../public')
 
 import { join } from 'path'
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron'
 
 let win: BrowserWindow | null
-// Here, you can also use other preload
 const preload = join(__dirname, './preload.js')
-// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const url = process.env['VITE_DEV_SERVER_URL']
+
+Menu.setApplicationMenu(Menu.buildFromTemplate([
+  {
+    label: '文件',
+    submenu: [
+      {
+        label: '选择目录',
+        click: async () => {
+          if (win) {
+            win.focus()
+            const result = await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
+            if (!result.canceled) {
+              win.webContents.send('select-new-dir', result)
+            }
+          }
+        }
+      },
+      {
+        label: '打开目录',
+        click: () => {
+          if (win) {
+            win.webContents.send('open-dir')
+          }
+        }
+      }
+    ]
+  },
+  {
+    label: '调试',
+    submenu: [
+      {
+        label: '刷新',
+        accelerator: 'F5',
+        click: () => {
+          if (win) {
+            win.webContents.reload()
+          }
+        }
+      },
+      {
+        label: '控制台',
+        accelerator: 'F12',
+        click: () => {
+          if (win) {
+            win.webContents.openDevTools()
+          }
+        }
+      }
+    ]
+  }
+]))
 
 function createWindow() {
   win = new BrowserWindow({
@@ -21,11 +70,6 @@ function createWindow() {
       nodeIntegration: true,
       preload
     }
-  })
-
-  // Test active push message to Renderer-process.
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
 
   if (url) {

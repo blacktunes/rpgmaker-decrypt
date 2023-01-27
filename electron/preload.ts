@@ -1,11 +1,16 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import fs from 'fs'
+import { contextBridge, ipcRenderer, shell } from 'electron'
+import fs from 'fs-extra'
 import path from 'path'
 import dirTree from 'directory-tree'
 
 Buffer.poolSize = 0
 
-contextBridge.exposeInMainWorld('ipcRenderer', ipcRenderer)
+contextBridge.exposeInMainWorld('ipcRenderer', {
+  ...ipcRenderer,
+  on: ipcRenderer.on.bind(ipcRenderer),
+  removeListener: ipcRenderer.removeListener.bind(ipcRenderer)
+})
+contextBridge.exposeInMainWorld('shell', shell)
 contextBridge.exposeInMainWorld('fs', fs)
 contextBridge.exposeInMainWorld('path', path)
 contextBridge.exposeInMainWorld('dirTree', dirTree)

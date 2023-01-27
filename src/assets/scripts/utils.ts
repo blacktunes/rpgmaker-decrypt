@@ -1,10 +1,29 @@
-import { state, setting } from '../../store'
+import { state, setting, previweItem, sidebar } from '../../store'
+
+const reset = () => {
+  state.img = 0
+  state.audio = 0
+
+  setting.previweIndex = setting.imageFileList.length
+
+  previweItem.name = ''
+  previweItem.path = ''
+
+  sidebar.search = ''
+}
 
 export const checkDir = (url: string) => {
   state.loading = true
   setTimeout(() => {
-    _checkDir(url)
-    state.loading = false
+    try {
+      _checkDir(url)
+      state.loading = false
+    } catch (err) {
+      console.error(err)
+      state.ready = false
+      state.loading = false
+      alert(err)
+    }
   }, 50)
 }
 
@@ -28,49 +47,64 @@ export const _checkDir = (url: string) => {
     setting.filePath = filePath
 
     const systemPath = path.join(filePath, 'data/System.json')
-    const { encryptionKey, gameTitle } = JSON.parse(fs.readFileSync(systemPath, 'utf8')) || {}
+    const { encryptionKey, gameTitle } = fs.readJSONSync(systemPath)
     console.log(encryptionKey)
     setting.encryptionKey = encryptionKey
     document.title = gameTitle
 
     const imageFileTree = dirTree(path.join(filePath, 'img'), {
-      extensions: /\.(png|png_|rpgmvp)$/i
+      extensions: /\.(png|png_|rpgmvp)$/i,
+    }, () => {
+      state.img += 1
     })
-    removeEmptyFolder(imageFileTree)
+    setting.imageFileList = getFileList(imageFileTree)
     setting.imageFileTree = imageFileTree
+    if (setting.imageFileTree.name) {
+      setting.imageFileTree.name = `图片[${state.img}]`
+    }
 
     const audioFileTree = dirTree(path.join(filePath, 'audio'), {
       extensions: /\.(ogg|ogg_|m4a|m4a_|rpgmvo|rpgmvm)$/i
+    }, () => {
+      state.audio += 1
     })
-    removeEmptyFolder(audioFileTree)
+    getFileList(audioFileTree)
     setting.audioFileTree = audioFileTree
+    if (setting.audioFileTree.name) {
+      setting.audioFileTree.name = `音频[${state.audio}]`
+    }
 
-    // if (fs.existsSync(path.join(filePath, 'js/rpg_core.js'))) {
-    //   setting.version = 'MV'
-    // } else if (fs.existsSync(path.join(filePath, 'js/rmmz_core.js'))) {
-    //   setting.version = 'MZ'
-    // } else {
-    //   alert('无法确认版本，默认为MV')
-    // }
-
+    reset()
     state.ready = true
   } else {
     alert('路径不存在')
   }
 }
 
-export const removeEmptyFolder = (obj: any, parent?: any) => {
-  const { children, name } = obj
+export const getFileList = (obj: directoryTree.DirectoryTree, parent?: directoryTree.DirectoryTree) => {
+  const { children, name, path } = obj
+  let list: {
+    name: string
+    path: string
+  }[] = []
   if (children) {
     let i = children.length
     while (i--) {
       const child = children[i]
-      removeEmptyFolder(child, obj)
+      list = [...list, ...getFileList(child, obj)]
     }
 
-    if (children.length === 0) {
-      const index = parent.children.findIndex((child: any) => child.name === name)
-      parent.children.splice(index, 1)
+    if (parent?.children) {
+      if (children.length === 0) {
+        const index = parent.children.findIndex((child: any) => child.name === name)
+        parent.children.splice(index, 1)
+      }
     }
+  } else {
+    list.push({
+      name,
+      path
+    })
   }
+  return list
 }

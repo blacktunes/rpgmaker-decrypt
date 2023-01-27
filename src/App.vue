@@ -13,6 +13,8 @@ import SelectDir from './components/SelectDir.vue'
 import Home from './components/Home.vue'
 import { state, previweItem } from './store'
 import { checkDir } from './assets/scripts/utils'
+import './assets/scripts/keyboard'
+import './assets/scripts/event'
 
 const dropDir = (e: DragEvent) => {
   if (e.dataTransfer?.files[0].path) {
@@ -29,6 +31,7 @@ const dropDir = (e: DragEvent) => {
   position: fixed;
   inset: 0;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   background: rgba(0, 0, 0, 0.3);

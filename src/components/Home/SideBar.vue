@@ -1,28 +1,33 @@
 <template>
   <div class="sidebar">
-    <n-input v-model:value="pattern" placeholder="搜索" />
+    <n-input v-model:value="sidebar.search" placeholder="搜索" />
     <n-tree
       block-line
-      :pattern="pattern"
+      :pattern="sidebar.search"
       :data="data"
-      :default-expanded-keys="defaultExpanded"
       key-field="path"
       label-field="name"
       children-field="children"
       :show-irrelevant-nodes="false"
       :animated="false"
+      :cancelable="false"
+      :keyboard="false"
       expand-on-click
       selectable
       :nodeProps="nodeProps"
       virtual-scroll
+      :selected-keys="selectedKeys"
+      @update:selected-keys="updateSelectedKeys"
+      :expanded-keys="expandedKeys"
+      @update:expanded-keys="updateExpandedKeys"
+      ref="treeRef"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { NInput, NTree } from 'naive-ui'
-import { setting } from '../../store'
+import { setting, sidebar } from '../../store'
 import { TreeOption } from 'naive-ui/es/tree/src/interface'
 
 const emit = defineEmits<{
@@ -32,11 +37,49 @@ const emit = defineEmits<{
   }): void
 }>()
 
-const defaultExpanded = ref([path.join(setting.filePath, 'img')])
-const pattern = ref('')
-const data = computed(() => [setting.imageFileTree, setting.audioFileTree])
+const treeRef = ref()
+
+const selectedKeys = computed(() => [setting.imageFileList[setting.previweIndex]?.path || ''])
+
+const setExpanded = (url: string) => {
+  if (url === setting.baseUrl) return
+  const temp = path.join(url , '..')
+  if (!expandedKeys.value.includes(temp)) {
+    expandedKeys.value.push(temp)
+  }
+  setExpanded(temp)
+}
+
+watch(selectedKeys, () => {
+  if (setting.imageFileList[setting.previweIndex]?.path) {
+    setExpanded(setting.imageFileList[setting.previweIndex].path)
+
+    treeRef.value.scrollTo({
+      key: setting.imageFileList[setting.previweIndex].path
+    })
+    emit('itemClick', {
+      name: setting.imageFileList[setting.previweIndex].name,
+      path: setting.imageFileList[setting.previweIndex].path
+    })
+  }
+})
+
+const updateSelectedKeys = (keys: string[]) => {
+  const index = setting.imageFileList.findIndex(item => item.path === keys[0])
+  if (index !== -1) {
+    setting.previweIndex = index
+  }
+}
+
+const expandedKeys = ref<string[]>([path.join(setting.filePath, 'img')])
+
+const updateExpandedKeys = (keys: string[]) => {
+  expandedKeys.value = keys
+}
+
+const data = computed(() => [setting.imageFileTree || {}, setting.audioFileTree || {}])
 watch(data, () => {
-  defaultExpanded.value = [path.join(setting.filePath, 'img')]
+  expandedKeys.value = [path.join(setting.filePath, 'img')]
 })
 
 const nodeProps = ({ option }: { option: TreeOption }) => {

@@ -6,19 +6,6 @@
         <div class="text">
           {{ previweItem.name }}
         </div>
-        <!-- <div class="switch">
-          <n-switch
-            :value="setting.version"
-            @update:value="(value) => (setting.version = value)"
-            :rail-style="railStyle"
-            checked-value="MV"
-            unchecked-value="MZ"
-            :round="false"
-          >
-            <template #checked>MV</template>
-            <template #unchecked>MZ</template>
-          </n-switch>
-        </div> -->
         <n-button style="margin-right: 10px" @click="save" :disabled="!previweItem.path" circle>
           <template #icon>
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32">
@@ -90,12 +77,19 @@ const save = () => {
   link.click()
 }
 
+let timer: NodeJS.Timeout | null = null
+
 const previwe = async (url: string, type?: 'ogg' | 'm4a', decode = false) => {
-  let buffer = fs.readFileSync(url).buffer
-  if (decode) {
-    buffer = decryptBuffer(buffer)
+  if (timer) {
+    clearTimeout(timer)
   }
-  previweItem.path = await toBase64(buffer, type)
+  timer = setTimeout(async () => {
+    let buffer = fs.readFileSync(url).buffer
+    if (decode) {
+      buffer = decryptBuffer(buffer)
+    }
+    previweItem.path = await toBase64(buffer, type)
+  }, 0)
 }
 
 const decryptBuffer = (arrayBuffer: ArrayBufferLike) => {
@@ -124,22 +118,6 @@ const toBase64 = (buffer: ArrayBufferLike, type?: 'ogg' | 'm4a') => {
     file.readAsDataURL(new Blob([buffer]))
   })
 }
-
-// const railStyle = ({ focused, checked }) => {
-//   const style = {}
-//   if (checked) {
-//     style.background = '#18a058'
-//     if (focused) {
-//       style.boxShadow = '0 0 0 2px #18a05840'
-//     }
-//   } else {
-//     style.background = '#2080f0'
-//     if (focused) {
-//       style.boxShadow = '0 0 0 2px #2080f040'
-//     }
-//   }
-//   return style
-// }
 </script>
 
 <style lang="scss" scoped>

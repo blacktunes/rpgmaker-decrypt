@@ -1,7 +1,7 @@
 {
   "name": "rpgmaker-decrypt",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist-electron/main.js",
   "author": "blacktunes",
   "description": "rpgmakerMV/MZ加密文件解码",
@@ -13,7 +13,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "directory-tree": "^3.5.1",
     "fs-extra": "^11.1.0",
     "vue": "^3.2.45"
   },
@@ -21,7 +20,7 @@
     "@types/node": "^18.11.18",
     "@vitejs/plugin-vue": "^4.0.0",
     "@vueuse/electron": "^9.10.0",
-    "electron": "^22.0.2",
+    "electron": "^22.1.0",
     "electron-builder": "^23.6.0",
     "naive-ui": "^2.34.3",
     "sass": "^1.57.1",

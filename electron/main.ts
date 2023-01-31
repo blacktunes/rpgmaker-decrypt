@@ -8,12 +8,14 @@ let win: BrowserWindow | null
 const preload = join(__dirname, './preload.js')
 const url = process.env['VITE_DEV_SERVER_URL']
 
-Menu.setApplicationMenu(Menu.buildFromTemplate([
+const menu = Menu.buildFromTemplate([
   {
-    label: '文件',
+    label: '加载',
     submenu: [
       {
+        id: 'load',
         label: '选择目录',
+        enabled: true,
         click: async () => {
           if (win) {
             win.focus()
@@ -25,10 +27,77 @@ Menu.setApplicationMenu(Menu.buildFromTemplate([
         }
       },
       {
-        label: '打开目录',
+        id: 'open-dir',
+        label: '打开游戏目录',
+        enabled: false,
         click: () => {
           if (win) {
             win.webContents.send('open-dir')
+          }
+        }
+      }
+    ]
+  },
+  {
+    label: '导出',
+    submenu: [
+      {
+        id: 'export-img',
+        label: '导出图片',
+        enabled: false,
+        click: async () => {
+          if (win) {
+            win.focus()
+            const result = await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
+            if (!result.canceled) {
+              win.webContents.send('export-img', result)
+            }
+          }
+        }
+      },
+      {
+        id: 'export-audio',
+        label: '导出音频',
+        enabled: false,
+        click: async () => {
+          if (win) {
+            win.focus()
+            const result = await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
+            if (!result.canceled) {
+              win.webContents.send('export-audio', result)
+            }
+          }
+        }
+      },
+      {
+        id: 'export-all',
+        label: '导出全部',
+        enabled: false,
+        click: async () => {
+          if (win) {
+            win.focus()
+            const result = await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
+            if (!result.canceled) {
+              win.webContents.send('export-all', result)
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    label: '其它',
+    submenu: [
+      {
+        label: '加密',
+        enabled: false,
+        click: async () => {
+          if (win) {
+            win.focus()
+            const result = await dialog.showOpenDialog(win, { properties: ['openFile'] })
+            if (!result.canceled) {
+              win.webContents.send('encryption', result)
+            }
           }
         }
       }
@@ -40,24 +109,18 @@ Menu.setApplicationMenu(Menu.buildFromTemplate([
       {
         label: '刷新',
         accelerator: 'F5',
-        click: () => {
-          if (win) {
-            win.webContents.reload()
-          }
-        }
+        role: 'reload'
       },
       {
         label: '控制台',
         accelerator: 'F12',
-        click: () => {
-          if (win) {
-            win.webContents.openDevTools()
-          }
-        }
+        role: 'toggleDevTools'
       }
     ]
   }
-]))
+])
+
+Menu.setApplicationMenu(menu)
 
 function createWindow() {
   win = new BrowserWindow({
@@ -98,6 +161,15 @@ ipcMain.handle('select-dir', async () => {
       canceled: true
     }
   }
+})
+
+ipcMain.on('set-state', (_e, flag: [boolean, boolean, boolean]) => {
+  const [isReady, isLoading, isWriting] = flag
+  menu.getMenuItemById('load')!.enabled = !isLoading && !isWriting
+  menu.getMenuItemById('open-dir')!.enabled = isReady
+  menu.getMenuItemById('export-img')!.enabled = isReady && !isLoading && !isWriting
+  menu.getMenuItemById('export-audio')!.enabled = isReady && !isLoading && !isWriting
+  menu.getMenuItemById('export-all')!.enabled = isReady && !isLoading && !isWriting
 })
 
 app.whenReady().then(createWindow)

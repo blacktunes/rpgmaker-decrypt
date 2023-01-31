@@ -20,6 +20,7 @@
         <img v-show="previweItem.path && previweItem.type === 'img'" :src="previweItem.path" draggable="false" />
         <audio v-show="previweItem.path && previweItem.type === 'audio'" :src="previweItem.path" controls autoplay
           contextmenu="['download']"></audio>
+        <div v-show="previweItem.path && previweItem.type === 'other'" style="user-select: none;">暂不支持的文件格式</div>
       </div>
     </div>
   </div>
@@ -28,7 +29,8 @@
 <script setup lang="ts">
 import SideBar from './Home/SideBar.vue'
 import { NButton } from 'naive-ui'
-import { setting, previweItem } from '../store'
+import { previweItem } from '../store'
+import { decryptBuffer } from '../assets/scripts/utils'
 
 const itemClick = (e: {
   name: string;
@@ -42,29 +44,30 @@ const itemClick = (e: {
   }
   if (/\.(rpgmvp|png_)$/i.test(e.name)) {
     previweItem.type = 'img'
-    previwe(e.path, undefined, true)
+    previwe(e.path, true)
     return
   }
   if (/\.(ogg)$/i.test(e.name)) {
     previweItem.type = 'audio'
-    previwe(e.path, 'ogg')
+    previwe(e.path)
     return
   }
   if (/\.(m4a)$/i.test(e.name)) {
     previweItem.type = 'audio'
-    previwe(e.path, 'm4a')
+    previwe(e.path)
     return
   }
   if (/\.(rpgmvo|ogg_)$/i.test(e.name)) {
     previweItem.type = 'audio'
-    previwe(e.path, 'ogg', true)
+    previwe(e.path, true)
     return
   }
   if (/\.(rpgmvm|m4a_)$/i.test(e.name)) {
     previweItem.type = 'audio'
-    previwe(e.path, 'm4a', true)
+    previwe(e.path, true)
     return
   }
+  previweItem.type = 'other'
 }
 
 const save = () => {
@@ -79,44 +82,16 @@ const save = () => {
 
 let timer: NodeJS.Timeout | null = null
 
-const previwe = async (url: string, type?: 'ogg' | 'm4a', decode = false) => {
+const previwe = async (url: string, decode = false) => {
   if (timer) {
     clearTimeout(timer)
   }
-  timer = setTimeout(async () => {
-    let buffer = fs.readFileSync(url).buffer
-    if (decode) {
-      buffer = decryptBuffer(buffer)
-    }
-    previweItem.path = await toBase64(buffer, type)
-  }, 0)
-}
-
-const decryptBuffer = (arrayBuffer: ArrayBufferLike) => {
-  const body = arrayBuffer.slice(16)
-  const view = new DataView(body)
-  const key = setting.encryptionKey.match(/.{2}/g)!
-
-  for (let i = 0; i < 16; i++) {
-    view.setUint8(i, view.getUint8(i) ^ parseInt(key[i], 16))
+  let buffer = fs.readFileSync(url).buffer
+  if (decode) {
+    buffer = decryptBuffer(buffer)
   }
-  return body
-}
-
-const toBase64 = (buffer: ArrayBufferLike, type?: 'ogg' | 'm4a') => {
-  return new Promise<string>(resolve => {
-    const file = new FileReader()
-    file.onload = (e) => {
-      let base64: string = e.target?.result as string
-      if (type === 'ogg') {
-        base64 = base64.replace('data:application/octet-stream', 'data:audio/ogg')
-      } else if (type === 'm4a') {
-        base64 = base64.replace('data:application/octet-stream', 'data:audio/x-m4a')
-      }
-      resolve(base64)
-    }
-    file.readAsDataURL(new Blob([buffer]))
-  })
+  URL.revokeObjectURL(previweItem.path)
+  previweItem.path = URL.createObjectURL(new Blob([buffer]))
 }
 </script>
 

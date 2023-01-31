@@ -39,10 +39,10 @@ const emit = defineEmits<{
 
 const treeRef = ref()
 
-const selectedKeys = computed(() => [setting.imageFileList[setting.previweIndex]?.path || ''])
+const selectedKeys = computed(() => [setting.filesList[setting.previweIndex]?.path || ''])
 
 const setExpanded = (url: string) => {
-  if (url === setting.baseUrl) return
+  if (path.relative(url, setting.baseUrl) === '') return
   const temp = path.join(url , '..')
   if (!expandedKeys.value.includes(temp)) {
     expandedKeys.value.push(temp)
@@ -51,21 +51,21 @@ const setExpanded = (url: string) => {
 }
 
 watch(selectedKeys, () => {
-  if (setting.imageFileList[setting.previweIndex]?.path) {
-    setExpanded(setting.imageFileList[setting.previweIndex].path)
+  if (setting.filesList[setting.previweIndex]?.path) {
+    setExpanded(setting.filesList[setting.previweIndex].path)
 
     treeRef.value.scrollTo({
-      key: setting.imageFileList[setting.previweIndex].path
+      key: setting.filesList[setting.previweIndex].path
     })
     emit('itemClick', {
-      name: setting.imageFileList[setting.previweIndex].name,
-      path: setting.imageFileList[setting.previweIndex].path
+      name: setting.filesList[setting.previweIndex].name,
+      path: setting.filesList[setting.previweIndex].path
     })
   }
 })
 
 const updateSelectedKeys = (keys: string[]) => {
-  const index = setting.imageFileList.findIndex(item => item.path === keys[0])
+  const index = setting.filesList.findIndex(item => item.path === keys[0])
   if (index !== -1) {
     setting.previweIndex = index
   }

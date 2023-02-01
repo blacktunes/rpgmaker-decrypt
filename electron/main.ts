@@ -89,12 +89,13 @@ const menu = Menu.buildFromTemplate([
     label: '其它',
     submenu: [
       {
+        id: 'encryption',
         label: '加密',
         enabled: false,
         click: async () => {
           if (win) {
             win.focus()
-            const result = await dialog.showOpenDialog(win, { properties: ['openFile'] })
+            const result = await dialog.showOpenDialog(win, { properties: ['openFile', 'multiSelections'] })
             if (!result.canceled) {
               win.webContents.send('encryption', result)
             }
@@ -106,6 +107,20 @@ const menu = Menu.buildFromTemplate([
   {
     label: '调试',
     submenu: [
+      {
+        visible: false,
+        label: '最大化',
+        accelerator: 'F4',
+        click: () => {
+          if (win) {
+            if (win.isMaximized()) {
+              win.unmaximize()
+            } else {
+              win.maximize()
+            }
+          }
+        }
+      },
       {
         label: '刷新',
         accelerator: 'F5',
@@ -170,6 +185,7 @@ ipcMain.on('set-state', (_e, flag: [boolean, boolean, boolean]) => {
   menu.getMenuItemById('export-img')!.enabled = isReady && !isLoading && !isWriting
   menu.getMenuItemById('export-audio')!.enabled = isReady && !isLoading && !isWriting
   menu.getMenuItemById('export-all')!.enabled = isReady && !isLoading && !isWriting
+  menu.getMenuItemById('encryption')!.enabled = isReady && !isLoading && !isWriting
 })
 
 app.whenReady().then(createWindow)

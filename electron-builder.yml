@@ -6,6 +6,7 @@ files:
   - dist
   - dist-electron
 win:
+  icon: public/icon.ico
   target:
     - target: 7z
       arch:

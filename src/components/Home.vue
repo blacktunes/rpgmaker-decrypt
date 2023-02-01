@@ -4,9 +4,9 @@
     <div class="main">
       <div class="topbar">
         <div class="text">
-          {{ previweItem.name }}
+          {{ previewItem.name }}
         </div>
-        <n-button style="margin-right: 10px" @click="save" :disabled="!previweItem.path" circle>
+        <n-button style="margin-right: 10px" @click="save" :disabled="!previewItem.path" circle>
           <template #icon>
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32">
               <path
@@ -16,11 +16,14 @@
           </template>
         </n-button>
       </div>
-      <div class="previwe">
-        <img v-show="previweItem.path && previweItem.type === 'img'" :src="previweItem.path" draggable="false" />
-        <audio v-show="previweItem.path && previweItem.type === 'audio'" :src="previweItem.path" controls autoplay
+      <div class="preview">
+        <img v-show="previewItem.path && previewItem.type === 'img'" :src="previewItem.path" draggable="false" />
+        <audio v-show="previewItem.path && previewItem.type === 'audio'" :src="previewItem.path" controls autoplay
           contextmenu="['download']"></audio>
-        <div v-show="previweItem.path && previweItem.type === 'other'" style="user-select: none;">暂不支持的文件格式</div>
+        <div v-show="previewItem.type === 'text'" class="text">
+          <n-code :code="previewItem.text" language="json" :hljs="hljs" show-line-numbers />
+        </div>
+        <div v-show="previewItem.type === 'other'" style="user-select: none;">暂不支持的文件格式</div>
       </div>
     </div>
   </div>
@@ -28,70 +31,79 @@
 
 <script setup lang="ts">
 import SideBar from './Home/SideBar.vue'
-import { NButton } from 'naive-ui'
-import { previweItem } from '../store'
+import { NButton, NCode } from 'naive-ui'
+import { previewItem } from '../store'
 import { decryptBuffer } from '../assets/scripts/utils'
+import hljs from 'highlight.js/lib/core'
+import json from 'highlight.js/lib/languages/json'
+
+hljs.registerLanguage('json', json)
 
 const itemClick = (e: {
   name: string;
   path: string;
 }) => {
-  previweItem.name = e.name
+  previewItem.name = e.name
   if (/\.(png)$/i.test(e.name)) {
-    previweItem.type = 'img'
-    previwe(e.path)
+    previewItem.type = 'img'
+    preview(e.path)
     return
   }
   if (/\.(rpgmvp|png_)$/i.test(e.name)) {
-    previweItem.type = 'img'
-    previwe(e.path, true)
+    previewItem.type = 'img'
+    preview(e.path, true)
     return
   }
   if (/\.(ogg)$/i.test(e.name)) {
-    previweItem.type = 'audio'
-    previwe(e.path)
+    previewItem.type = 'audio'
+    preview(e.path)
     return
   }
   if (/\.(m4a)$/i.test(e.name)) {
-    previweItem.type = 'audio'
-    previwe(e.path)
+    previewItem.type = 'audio'
+    preview(e.path)
     return
   }
   if (/\.(rpgmvo|ogg_)$/i.test(e.name)) {
-    previweItem.type = 'audio'
-    previwe(e.path, true)
+    previewItem.type = 'audio'
+    preview(e.path, true)
     return
   }
   if (/\.(rpgmvm|m4a_)$/i.test(e.name)) {
-    previweItem.type = 'audio'
-    previwe(e.path, true)
+    previewItem.type = 'audio'
+    preview(e.path, true)
     return
   }
-  previweItem.type = 'other'
+  if (/\.(txt|json)$/i.test(e.name)) {
+    previewItem.type = 'text'
+    previewText(e.path)
+    return
+  }
+  previewItem.type = 'other'
 }
 
 const save = () => {
   const link = document.createElement('a')
-  link.href = previweItem.path
-  link.download = previweItem.name
+  link.href = previewItem.path
+  link.download = previewItem.name
     .replace(/\.(rpgmvp|png_)$/i, '.png')
     .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
     .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
   link.click()
 }
 
-let timer: NodeJS.Timeout | null = null
+const previewText = async (url: string) => {
+  const text = await fs.readFile(url, 'utf-8')
+  previewItem.text = text
+}
 
-const previwe = async (url: string, decode = false) => {
-  if (timer) {
-    clearTimeout(timer)
-  }
+const preview = (url: string, decode = false) => {
   let buffer = fs.readFileSync(url).buffer
   if (decode) {
     buffer = decryptBuffer(buffer)
   }
-  URL.revokeObjectURL(previweItem.path)
-  previweItem.path = URL.createObjectURL(new Blob([buffer]))
+  URL.revokeObjectURL(previewItem.path)
+  previewItem.path = URL.createObjectURL(new Blob([buffer]))
 }
 </script>
 
@@ -130,12 +142,19 @@ const previwe = async (url: string, decode = false) => {
       }
     }
 
-    .previwe {
+    .preview {
       flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
+      overflow: auto;
+
+      .text {
+        box-sizing: border-box;
+        padding: 15px;
+        width: 100%;
+        height: 100%;
+      }
 
       img {
         display: block;

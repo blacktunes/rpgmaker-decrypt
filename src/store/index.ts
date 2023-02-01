@@ -23,7 +23,7 @@ export const setting = reactive<{
   outUrl: string
   filePath: string
   encryptionKey: string
-  previweIndex: number
+  previewIndex: number
   imageFileTree?: DirectoryTree
   imageFileList: {
     name: string
@@ -43,7 +43,7 @@ export const setting = reactive<{
   outUrl: '',
   filePath: '',
   encryptionKey: '',
-  previweIndex: 0,
+  previewIndex: 0,
   imageFileTree: undefined,
   imageFileList: [],
   audioFileTree: undefined,
@@ -51,10 +51,11 @@ export const setting = reactive<{
   filesList: []
 })
 
-export const previweItem = reactive({
+export const previewItem = reactive({
   type: 'img',
   name: '',
-  path: ''
+  path: '',
+  text: ''
 })
 
 export const sidebar = reactive({

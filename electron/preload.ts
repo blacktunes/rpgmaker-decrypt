@@ -15,3 +15,7 @@ contextBridge.exposeInMainWorld('isDirectory', (url: string) => {
   return fs.statSync(url).isDirectory()
 })
 contextBridge.exposeInMainWorld('path', path)
+contextBridge.exposeInMainWorld('Buffer', {
+  from: Buffer.from,
+  concat: Buffer.concat
+})

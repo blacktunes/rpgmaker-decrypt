@@ -79,7 +79,7 @@ ipcRenderer.on('encryption', (_e, result: Electron.OpenDialogReturnValue) => {
     return
   }
   if (isReady()) {
-    encryption(result.filePaths[0])
+    encryption(result.filePaths)
   } else {
     message.warning('未加载项目')
   }

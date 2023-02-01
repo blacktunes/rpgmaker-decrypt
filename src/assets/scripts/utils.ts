@@ -1,5 +1,5 @@
 import { createDiscreteApi } from 'naive-ui'
-import { state, setting, previweItem, sidebar } from '../../store'
+import { state, setting, previewItem, sidebar } from '../../store'
 import { DirectoryTree } from '../types/types'
 
 export const { message } = createDiscreteApi(['message'])
@@ -14,10 +14,10 @@ const reset = () => {
   state.img = 0
   state.audio = 0
 
-  setting.previweIndex = setting.filesList.length
+  setting.previewIndex = setting.filesList.length
 
-  previweItem.name = ''
-  previweItem.path = ''
+  previewItem.name = ''
+  previewItem.path = ''
 
   sidebar.search = ''
 }
@@ -25,9 +25,10 @@ const reset = () => {
 export const checkDir = (url: string) => {
   state.filesNum = 0
   state.loading = true
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
-      _checkDir(url)
+      await _checkDir(url)
+
       setTimeout(() => {
         state.loading = false
       }, 500)
@@ -107,6 +108,8 @@ const getFileTree = async (url: string, fn?: Function): Promise<DirectoryTree | 
           dirTree.children?.push(subItem)
         }
       }
+    } else {
+      dirTree.disabled = true
     }
     return dirTree
   } else {
@@ -154,16 +157,35 @@ export const decryptBuffer = (arrayBuffer: ArrayBufferLike) => {
   const key = setting.encryptionKey.match(/.{2}/g)!
 
   for (let i = 0; i < 16; i++) {
+    // console.log(view.getUint8(i), parseInt(key[i], 16))
     view.setUint8(i, view.getUint8(i) ^ parseInt(key[i], 16))
   }
   return body
 }
 
-export const encryption = async (url: string) => {
-  // TODO
-  // const res = new Uint8Array(decryptBuffer((await fs.readFile(url)).buffer))
-  // await fs.outputFile(path.join(url, '..', path.basename(url, path.extname(url))), res)
-  console.log(url)
+export const encryptionBuffer = (arrayBuffer: ArrayBufferLike) => {
+  const body = arrayBuffer
+  const view = new DataView(body)
+  const key = setting.encryptionKey.match(/.{2}/g)!
+
+  for (let i = 0; i < 16; i++) {
+    view.setUint8(i, view.getUint8(i) ^ parseInt(key[i], 16))
+  }
+  return Buffer.concat([Buffer.from(new ArrayBuffer(16)), Buffer.from(arrayBuffer)]).buffer
+}
+
+export const encryption = async (urls: string[]) => {
+  state.writing.percentage = 0
+  state.writing.total = urls.length
+  state.writing.show = true
+  for (const url of urls) {
+    const res = new Uint8Array(encryptionBuffer((await fs.readFile(url)).buffer))
+    await fs.outputFile(path.join(url, '..', `${path.basename(url, path.extname(url))}._`), res)
+    state.writing.percentage += 1
+  }
+  setTimeout(() => {
+    state.writing.show = false
+  }, 500)
 }
 
 export const saveFile = (dir: string, type: 'img' | 'audio' | 'all' = 'all') => {

@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import SelectDir from './components/SelectDir.vue'
 import Home from './components/Home.vue'
-import { state, previweItem } from './store'
+import { state, previewItem } from './store'
 import { checkDir } from './assets/scripts/utils'
 import './assets/scripts/keyboard'
 import './assets/scripts/event'
@@ -35,8 +35,8 @@ import './assets/scripts/event'
 const dropDir = (e: DragEvent) => {
   if (e.dataTransfer?.files?.[0]?.path) {
     checkDir(e.dataTransfer.files[0].path)
-    previweItem.name = ''
-    previweItem.path = ''
+    previewItem.name = ''
+    previewItem.path = ''
   }
 }
 

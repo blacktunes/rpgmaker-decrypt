@@ -39,7 +39,7 @@ const emit = defineEmits<{
 
 const treeRef = ref()
 
-const selectedKeys = computed(() => [setting.filesList[setting.previweIndex]?.path || ''])
+const selectedKeys = computed(() => [setting.filesList[setting.previewIndex]?.path || ''])
 
 const setExpanded = (url: string) => {
   if (path.relative(url, setting.baseUrl) === '') return
@@ -51,15 +51,15 @@ const setExpanded = (url: string) => {
 }
 
 watch(selectedKeys, () => {
-  if (setting.filesList[setting.previweIndex]?.path) {
-    setExpanded(setting.filesList[setting.previweIndex].path)
+  if (setting.filesList[setting.previewIndex]?.path) {
+    setExpanded(setting.filesList[setting.previewIndex].path)
 
     treeRef.value.scrollTo({
-      key: setting.filesList[setting.previweIndex].path
+      key: setting.filesList[setting.previewIndex].path
     })
     emit('itemClick', {
-      name: setting.filesList[setting.previweIndex].name,
-      path: setting.filesList[setting.previweIndex].path
+      name: setting.filesList[setting.previewIndex].name,
+      path: setting.filesList[setting.previewIndex].path
     })
   }
 })
@@ -67,7 +67,7 @@ watch(selectedKeys, () => {
 const updateSelectedKeys = (keys: string[]) => {
   const index = setting.filesList.findIndex(item => item.path === keys[0])
   if (index !== -1) {
-    setting.previweIndex = index
+    setting.previewIndex = index
   }
 }
 

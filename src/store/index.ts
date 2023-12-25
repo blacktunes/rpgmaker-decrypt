@@ -1,5 +1,4 @@
 import { reactive } from 'vue'
-import { DirectoryTree } from '../assets/types/types'
 
 export const state = reactive({
   ready: false,

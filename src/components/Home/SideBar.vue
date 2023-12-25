@@ -10,7 +10,10 @@
       @click.stop="showSlideBar = !showSlideBar"
     >
       <svg
-        :style="{ transform: showSlideBar ? 'rotate(0deg)' : 'rotate(180deg)' }"
+        :style="{
+          transform: showSlideBar ? 'rotate(0deg)' : 'rotate(180deg)',
+          opacity: showSlideBar ? '' : '0.9'
+        }"
         xmlns="http://www.w3.org/2000/svg"
         xmlns:xlink="http://www.w3.org/1999/xlink"
         viewBox="0 0 24 24"
@@ -152,6 +155,17 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
     background: #fff;
     transition: 0.25s;
     cursor: pointer;
+
+    svg {
+      transition: opacity 0.2s;
+      opacity: 0.1;
+    }
+
+    &:hover {
+      svg {
+        opacity: 0.9;
+      }
+    }
   }
 
   .search {

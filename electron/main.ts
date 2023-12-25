@@ -153,7 +153,7 @@ Menu.setApplicationMenu(menu)
 function createWindow() {
   win = new BrowserWindow({
     show: true,
-    minWidth: 800,
+    minWidth: 900,
     minHeight: 600,
     icon: join(process.env.PUBLIC, 'icon.ico'),
     webPreferences: {

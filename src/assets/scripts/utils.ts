@@ -1,6 +1,5 @@
 import { createDiscreteApi } from 'naive-ui'
 import { state, setting, previewItem, sidebar } from '../../store'
-import { DirectoryTree } from '../types/types'
 
 export const { message, dialog } = createDiscreteApi(['message', 'dialog'])
 

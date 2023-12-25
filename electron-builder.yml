@@ -8,7 +8,7 @@ files:
 win:
   icon: public/icon.ico
   target:
-    - target: 7z
+    - target: dir
       arch:
         - x64
   artifactName: '${productName}_${version}.${ext}'

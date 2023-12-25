@@ -51,6 +51,10 @@ export const setting = reactive<{
   filesList: []
 })
 
+watch(() => setting.encryptionKey, () => {
+  ipcRenderer.send('set-encryption', !!setting.encryptionKey)
+})
+
 export const previewItem = reactive({
   type: 'img',
   name: '',

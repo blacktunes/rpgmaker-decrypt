@@ -1,5 +1,5 @@
 import { setting } from '../../store'
-import { message, checkDir, isReady, saveFile, isWriting, isLoading, encryption } from './utils'
+import { message, checkDir, isReady, saveFile, isWriting, isLoading, encryption, decryptGame } from './utils'
 
 ipcRenderer.on('select-new-dir', (_e, result: Electron.OpenDialogReturnValue) => {
   if (isWriting()) {
@@ -80,6 +80,22 @@ ipcRenderer.on('encryption', (_e, result: Electron.OpenDialogReturnValue) => {
   }
   if (isReady()) {
     encryption(result.filePaths)
+  } else {
+    message.warning('未加载项目')
+  }
+})
+
+ipcRenderer.on('decrypt-game', (_e) => {
+  if (isWriting()) {
+    message.warning('正在导出')
+    return
+  }
+  if (isLoading()) {
+    message.warning('正在加载')
+    return
+  }
+  if (isReady()) {
+    decryptGame()
   } else {
     message.warning('未加载项目')
   }

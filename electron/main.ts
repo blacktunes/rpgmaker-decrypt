@@ -90,15 +90,28 @@ const menu = Menu.buildFromTemplate([
     submenu: [
       {
         id: 'encryption',
-        label: '加密',
+        label: '加密文件',
         enabled: false,
         click: async () => {
           if (win) {
             win.focus()
-            const result = await dialog.showOpenDialog(win, { properties: ['openFile', 'multiSelections'] })
+            const result = await dialog.showOpenDialog(win, {
+              properties: ['openFile', 'multiSelections']
+            })
             if (!result.canceled) {
               win.webContents.send('encryption', result)
             }
+          }
+        }
+      },
+      {
+        id: 'decrypt-game',
+        label: '解密游戏',
+        enabled: false,
+        click: async () => {
+          if (win) {
+            win.focus()
+            win.webContents.send('decrypt-game')
           }
         }
       }
@@ -186,6 +199,11 @@ ipcMain.on('set-state', (_e, flag: [boolean, boolean, boolean]) => {
   menu.getMenuItemById('export-audio')!.enabled = isReady && !isLoading && !isWriting
   menu.getMenuItemById('export-all')!.enabled = isReady && !isLoading && !isWriting
   menu.getMenuItemById('encryption')!.enabled = isReady && !isLoading && !isWriting
+  menu.getMenuItemById('decrypt-game')!.enabled = isReady && !isLoading && !isWriting
+})
+
+ipcMain.on('set-encryption', (_e, flag: boolean) => {
+  menu.getMenuItemById('encryption')!.enabled = flag
 })
 
 app.whenReady().then(createWindow)

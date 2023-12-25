@@ -2,7 +2,7 @@ import { createDiscreteApi } from 'naive-ui'
 import { state, setting, previewItem, sidebar } from '../../store'
 import { DirectoryTree } from '../types/types'
 
-export const { message } = createDiscreteApi(['message'])
+export const { message, dialog } = createDiscreteApi(['message', 'dialog'])
 
 export const isReady = () => setting.baseUrl && state.ready
 
@@ -42,7 +42,6 @@ export const checkDir = (url: string) => {
 }
 
 export const _checkDir = async (url: string) => {
-
   if (fs.existsSync(url)) {
     let _url: string
     if (fs.existsSync(path.join(url, 'www/data/System.json'))) {
@@ -210,7 +209,7 @@ export const saveFile = (dir: string, type: 'img' | 'audio' | 'all' = 'all') => 
     try {
       for (const { name, path: filePath } of filesList) {
         const outPath = filePath
-          .replace(setting.baseUrl, (path.join(dir, 'out/')))
+          .replace(setting.baseUrl, path.join(dir, `${document.title}-decrypt`))
           .replace(/\.(rpgmvp|png_)$/i, '.png')
           .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
           .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
@@ -229,6 +228,116 @@ export const saveFile = (dir: string, type: 'img' | 'audio' | 'all' = 'all') => 
     }
     setTimeout(() => {
       state.writing.show = false
+    }, 500)
+  }, 50)
+}
+
+export const decryptGame = () => {
+  dialog.info({
+    title: '解密游戏',
+    content: '是否保存图片和音频原文件',
+    positiveText: '保留',
+    negativeText: '删除',
+    maskClosable: true,
+    onPositiveClick: () => {
+      _decryptGame(true)
+    },
+    onNegativeClick: () => {
+      _decryptGame(false)
+    }
+  })
+}
+
+export const _decryptGame = (backups: boolean) => {
+  state.writing.percentage = 0
+  state.writing.show = true
+
+  setTimeout(async () => {
+    try {
+      const systemPath = path.join(setting.filePath, 'data/System.json')
+      await fs.copyFile(
+        path.join(setting.filePath, 'data/System.json'),
+        path.join(setting.filePath, 'data/System.json.bak')
+      )
+      const systemData = await fs.readJSON(systemPath)
+
+      if (systemData.hasEncryptedImages) {
+        state.writing.total += setting.imageFileList.length
+
+        for (const { name, path: filePath } of setting.imageFileList) {
+          const outPath = filePath
+            .replace(`${path.sep}img${path.sep}`, `${path.sep}_img_${path.sep}`)
+            .replace(`${path.sep}audio${path.sep}`, `${path.sep}_audio_${path.sep}`)
+            .replace(/\.(rpgmvp|png_)$/i, '.png')
+            .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
+            .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
+          if (/\.(rpgmvo|ogg_|rpgmvm|m4a_|png_|rpgmvp)$/i.test(name)) {
+            const res = new Uint8Array(decryptBuffer((await fs.readFile(filePath)).buffer))
+            await fs.outputFile(outPath, res)
+          } else {
+            await fs.ensureDir(path.join(outPath, '..'))
+            await fs.copyFile(filePath, outPath)
+          }
+          state.writing.percentage += 1
+        }
+
+        if (backups) {
+          await fs.rename(path.join(setting.baseUrl, 'img'), path.join(setting.baseUrl, 'img.bak'))
+        } else {
+          await fs.remove(path.join(setting.baseUrl, 'img'))
+        }
+        await fs.rename(path.join(setting.baseUrl, '_img_'), path.join(setting.baseUrl, 'img'))
+
+        systemData.hasEncryptedImages = false
+      }
+
+      if (systemData.hasEncryptedAudio) {
+        state.writing.total += setting.audioFileList.length
+
+        for (const { name, path: filePath } of setting.audioFileList) {
+          const outPath = filePath
+            .replace(`${path.sep}img${path.sep}`, `${path.sep}_img_${path.sep}`)
+            .replace(`${path.sep}audio${path.sep}`, `${path.sep}_audio_${path.sep}`)
+            .replace(/\.(rpgmvp|png_)$/i, '.png')
+            .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
+            .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
+          if (/\.(rpgmvo|ogg_|rpgmvm|m4a_|png_|rpgmvp)$/i.test(name)) {
+            const res = new Uint8Array(decryptBuffer((await fs.readFile(filePath)).buffer))
+            await fs.outputFile(outPath, res)
+          } else {
+            await fs.ensureDir(path.join(outPath, '..'))
+            await fs.copyFile(filePath, outPath)
+          }
+          state.writing.percentage += 1
+        }
+
+        if (backups) {
+          await fs.rename(
+            path.join(setting.baseUrl, 'audio'),
+            path.join(setting.baseUrl, 'audio.bak')
+          )
+        } else {
+          await fs.remove(path.join(setting.baseUrl, 'audio'))
+        }
+        await fs.rename(path.join(setting.baseUrl, '_audio_'), path.join(setting.baseUrl, 'audio'))
+
+        systemData.hasEncryptedAudio = false
+      }
+
+      await fs.writeJSON(systemPath, systemData)
+
+      if (await fs.exists(path.join(setting.baseUrl, 'nw.dll'))) {
+        await fs.writeFile(path.join(setting.baseUrl, 'Game.rmmzproject'), 'RPGMZ 1.4.3')
+      } else {
+        await fs.writeFile(path.join(setting.baseUrl, 'Game.rpgproject'), 'RPGMV 1.6.1')
+      }
+    } catch (err) {
+      state.writing.show = false
+      alert(err)
+    }
+    setTimeout(() => {
+      state.writing.show = false
+      checkDir(setting.baseUrl)
     }, 500)
   }, 50)
 }

@@ -152,7 +152,9 @@ Menu.setApplicationMenu(menu)
 
 function createWindow() {
   win = new BrowserWindow({
-    show: true,
+    show: false,
+    width: 900,
+    height: 600,
     minWidth: 900,
     minHeight: 600,
     icon: join(process.env.PUBLIC, 'icon.ico'),
@@ -204,6 +206,10 @@ ipcMain.on('set-state', (_e, flag: [boolean, boolean, boolean]) => {
 
 ipcMain.on('set-encryption', (_e, flag: boolean) => {
   menu.getMenuItemById('encryption')!.enabled = flag
+})
+
+ipcMain.on('ready', () => {
+  win?.show()
 })
 
 app.whenReady().then(createWindow)

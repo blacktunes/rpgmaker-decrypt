@@ -22,8 +22,6 @@ const reset = () => {
 }
 
 export const checkDir = (url: string) => {
-  state.filesNum = 0
-  state.loading = true
   setTimeout(async () => {
     try {
       await _checkDir(url)
@@ -54,6 +52,9 @@ export const _checkDir = async (url: string) => {
 
     const filePath = path.join(url, _url)
     if (filePath === setting.baseUrl) return
+
+    state.filesNum = 0
+    state.loading = true
 
     setting.baseUrl = filePath
     console.log(filePath)

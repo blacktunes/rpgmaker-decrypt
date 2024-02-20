@@ -1,21 +1,5 @@
 <template>
-  <Transition name="blur-fade">
-    <div
-      class="loading"
-      v-show="state.loading"
-    >
-      <NSpin
-        size="large"
-        stroke="#222"
-      >
-        <template #description>
-          <span style="user-select: none; color: #222">
-            {{ state.filesNum }}
-          </span>
-        </template>
-      </NSpin>
-    </div>
-  </Transition>
+  <Loading />
   <Transition name="blur-fade">
     <div
       class="writing"
@@ -97,8 +81,6 @@
 import Home from './components/Home.vue'
 import { state, previewItem } from './store'
 import { checkDir } from './assets/scripts/utils'
-import './assets/scripts/keyboard'
-import './assets/scripts/event'
 
 const hover = ref(false)
 

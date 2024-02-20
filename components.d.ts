@@ -8,10 +8,13 @@ export {}
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     Home: typeof import('./src/components/Home.vue')['default']
+    Loading: typeof import('./src/components/Loading.vue')['default']
     NIcon: typeof import('naive-ui')['NIcon']
+    NNumberAnimation: typeof import('naive-ui')['NNumberAnimation']
     NP: typeof import('naive-ui')['NP']
     NProgress: typeof import('naive-ui')['NProgress']
     NSpin: typeof import('naive-ui')['NSpin']
+    NTag: typeof import('naive-ui')['NTag']
     NText: typeof import('naive-ui')['NText']
     SelectDir: typeof import('./src/components/SelectDir.vue')['default']
     SideBar: typeof import('./src/components/Home/SideBar.vue')['default']

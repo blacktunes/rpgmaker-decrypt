@@ -17,6 +17,11 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
     "types": [
       "vite-plugin-electron/electron-env",
       "naive-ui/volar"

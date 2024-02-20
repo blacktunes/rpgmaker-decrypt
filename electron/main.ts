@@ -160,7 +160,8 @@ function createWindow() {
     icon: join(process.env.PUBLIC, 'icon.ico'),
     webPreferences: {
       contextIsolation: true,
-      nodeIntegration: true,
+      nodeIntegration: false,
+      nodeIntegrationInWorker: true,
       preload
     }
   })

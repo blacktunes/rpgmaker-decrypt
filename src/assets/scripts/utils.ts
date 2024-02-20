@@ -1,7 +1,17 @@
 import { createDiscreteApi } from 'naive-ui'
 import { state, setting, previewItem, sidebar } from '../../store'
+import ReadDir from '@/webworker/readDir?worker'
 
-export const { message, dialog } = createDiscreteApi(['message', 'dialog'])
+const readDirWorker = new ReadDir()
+
+export const { message, dialog, notification } = createDiscreteApi(
+  ['message', 'dialog', 'notification'],
+  {
+    notificationProviderProps: {
+      keepAliveOnHover: true
+    }
+  }
+)
 
 export const isReady = () => setting.baseUrl && state.ready
 
@@ -21,104 +31,93 @@ const reset = () => {
   sidebar.search = ''
 }
 
-export const checkDir = (url: string) => {
-  setTimeout(async () => {
-    try {
-      await _checkDir(url)
-
-      setTimeout(() => {
-        state.loading = false
-      }, 500)
-    } catch (err) {
-      console.error(err)
-      state.ready = false
-      state.loading = false
-      alert(err)
-    }
-  }, 50)
-}
-
-export const _checkDir = async (url: string) => {
-  if (fs.existsSync(url)) {
-    let _url: string
-    if (fs.existsSync(path.join(url, 'www/data/System.json'))) {
-      _url = 'www/'
-    } else if (fs.existsSync(path.join(url, 'data/System.json'))) {
-      _url = '/'
-    } else {
-      message.error('不是MZ/MZ目录或data/System.json不存在')
-      return
-    }
-
-    const filePath = path.join(url, _url)
-    if (filePath === setting.baseUrl) return
-
-    state.filesNum = 0
-    state.loading = true
-
-    setting.baseUrl = filePath
-    console.log(filePath)
-    setting.filePath = filePath
-
-    const systemPath = path.join(filePath, 'data/System.json')
-    const { encryptionKey, gameTitle } = fs.readJSONSync(systemPath)
-    console.log(encryptionKey)
-    setting.encryptionKey = encryptionKey
-    document.title = gameTitle
-
-    const imageFileTree = await getFileTree(path.join(filePath, 'img'), () => {
-      state.filesNum += 1
+export const checkDir = async (url: string) => {
+  if (!(await fs.exists(url))) {
+    notification.error({
+      title: '加载失败',
+      content: '文件不存在',
+      duration: 3000
     })
-    setting.imageFileList = getFileList(imageFileTree)
-    setting.imageFileTree = imageFileTree
-    if (setting.imageFileTree?.name) {
-      setting.imageFileTree.name = `图片[${state.img}]`
-    }
-
-    const audioFileTree = await getFileTree(path.join(filePath, 'audio'), () => {
-      state.filesNum += 1
-    })
-    setting.audioFileList = getFileList(audioFileTree)
-    setting.audioFileTree = audioFileTree
-    if (setting.audioFileTree?.name) {
-      setting.audioFileTree.name = `音频[${state.audio}]`
-    }
-    setting.filesList = [...setting.audioFileList, ...setting.imageFileList]
-
-    reset()
-    state.ready = true
-  } else {
-    message.error('路径不存在')
+    return
   }
+
+  let _url: string = '/'
+  if (await fs.exists(path.join(url, 'www'))) {
+    _url = 'www/'
+  }
+  const filePath = path.join(url, _url)
+  if (filePath === setting.baseUrl) {
+    dialog.info({
+      title: '重新加载',
+      content: '是否重新加载该目录',
+      positiveText: '是',
+      negativeText: '否',
+      maskClosable: true,
+      onPositiveClick: () => {
+        loadDir(filePath)
+      }
+    })
+    return
+  }
+  loadDir(filePath)
 }
 
-const getFileTree = async (url: string, fn?: Function): Promise<DirectoryTree | undefined> => {
-  if (isDirectory(url)) {
-    const list = await fs.readdir(url)
-    const dirTree: DirectoryTree = {
-      name: path.basename(url),
-      path: url,
-      children: []
-    }
-    if (list.length > 0) {
-      for (const subUrl of list) {
-        const subItem = await getFileTree(path.join(url, subUrl), fn)
-        if (subItem) {
-          dirTree.children?.push(subItem)
+const loadDir = (url: string) => {
+  state.count.image = 0
+  state.count.audio = 0
+  state.loading = true
+
+  setting.baseUrl = url
+  console.log(url)
+  setting.filePath = url
+
+  readDirWorker.postMessage(url)
+
+  readDirWorker.onmessage = (e) => {
+    const event: DirWorkerEvent = e.data
+
+    switch (event.type) {
+      case 'no-system':
+        notification.error({
+          title: event.title,
+          content: event.content,
+          duration: 3000
+        })
+        break
+      case 'system':
+        setting.encryptionKey = event.key
+        document.title = event.title
+        break
+      case 'count':
+        if (event.count === 'image') {
+          state.count.image += 1
         }
-      }
-    } else {
-      dirTree.disabled = true
+        if (event.count === 'audio') {
+          state.count.audio += 1
+        }
+        break
+      case 'image':
+        setting.imageFileTree = event.data
+        break
+      case 'audio':
+        setting.audioFileTree = event.data
+        break
+      case 'done':
+        reset()
+        state.ready = true
+        state.loading = false
+        break
     }
-    return dirTree
-  } else {
-    if (fn) {
-      fn()
-    }
-    return {
-      name: path.basename(url),
-      path: url
-    }
+  }
+
+  readDirWorker.onerror = (err) => {
+    state.ready = false
+    state.loading = false
+    notification.error({
+      title: '加载失败',
+      content: err.message,
+      duration: 3000
+    })
   }
 }
 
@@ -136,12 +135,6 @@ export const getFileList = (obj?: DirectoryTree) => {
       list = [...list, ...getFileList(child)]
     }
   } else {
-    if (/\.(png|png_|rpgmvp)$/i.test(name)) {
-      state.img += 1
-    }
-    if (/\.(ogg|ogg_|m4a|m4a_|rpgmvo|rpgmvm)$/i.test(name)) {
-      state.audio += 1
-    }
     list.push({
       name,
       path
@@ -156,7 +149,6 @@ export const decryptBuffer = (arrayBuffer: ArrayBufferLike) => {
   const key = setting.encryptionKey.match(/.{2}/g)!
 
   for (let i = 0; i < 16; i++) {
-    // console.log(view.getUint8(i), parseInt(key[i], 16))
     view.setUint8(i, view.getUint8(i) ^ parseInt(key[i], 16))
   }
   return body

@@ -26,12 +26,7 @@ export default defineConfig({
       }
     ]),
     AutoImport({
-      imports: [
-        'vue',
-        {
-          'naive-ui': ['useDialog', 'useMessage', 'useNotification', 'useLoadingBar']
-        }
-      ]
+      imports: ['vue']
     }),
     Components({
       resolvers: [NaiveUiResolver()]

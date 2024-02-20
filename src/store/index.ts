@@ -10,7 +10,10 @@ export const state = reactive({
   },
   img: 0,
   audio: 0,
-  filesNum: 0
+  count: {
+    image: 0,
+    audio: 0
+  }
 })
 
 watch([() => state.ready, () => state.loading, () => state.writing.show], () => {

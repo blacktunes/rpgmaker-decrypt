@@ -11,9 +11,6 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 })
 contextBridge.exposeInMainWorld('shell', shell)
 contextBridge.exposeInMainWorld('fs', fs)
-contextBridge.exposeInMainWorld('isDirectory', (url: string) => {
-  return fs.statSync(url).isDirectory()
-})
 contextBridge.exposeInMainWorld('path', path)
 contextBridge.exposeInMainWorld('Buffer', {
   from: Buffer.from,

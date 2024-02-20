@@ -1,6 +1,6 @@
-import { createDiscreteApi } from 'naive-ui'
-import { state, setting, previewItem, sidebar } from '../../store'
 import ReadDir from '@/webworker/readDir?worker'
+import { createDiscreteApi } from 'naive-ui'
+import { previewItem, setting, sidebar, state } from '../../store'
 
 const readDirWorker = new ReadDir()
 
@@ -20,9 +20,6 @@ export const isLoading = () => state.loading
 export const isWriting = () => state.writing.show
 
 const reset = () => {
-  state.img = 0
-  state.audio = 0
-
   setting.previewIndex = setting.filesList.length
 
   previewItem.name = ''
@@ -63,13 +60,14 @@ export const checkDir = async (url: string) => {
 }
 
 const loadDir = (url: string) => {
+  document.title = 'RPGMakerMV/MZ资源浏览器'
+
   state.count.image = 0
   state.count.audio = 0
   state.loading = true
 
   setting.baseUrl = url
   console.log(url)
-  setting.filePath = url
 
   readDirWorker.postMessage(url)
 
@@ -98,9 +96,11 @@ const loadDir = (url: string) => {
         break
       case 'image':
         setting.imageFileTree = event.data
+        setting.imageFileTree.name = '图片'
         break
       case 'audio':
         setting.audioFileTree = event.data
+        setting.audioFileTree.name = '音频'
         break
       case 'done':
         reset()
@@ -246,10 +246,10 @@ export const _decryptGame = (backups: boolean) => {
 
   setTimeout(async () => {
     try {
-      const systemPath = path.join(setting.filePath, 'data/System.json')
+      const systemPath = path.join(setting.baseUrl, 'data/System.json')
       await fs.copyFile(
-        path.join(setting.filePath, 'data/System.json'),
-        path.join(setting.filePath, 'data/System.json.bak')
+        path.join(setting.baseUrl, 'data/System.json'),
+        path.join(setting.baseUrl, 'data/System.json.bak')
       )
       const systemData = await fs.readJSON(systemPath)
 

@@ -8,8 +8,6 @@ export const state = reactive({
     percentage: 0,
     total: 0
   },
-  img: 0,
-  audio: 0,
   count: {
     image: 0,
     audio: 0
@@ -22,8 +20,6 @@ watch([() => state.ready, () => state.loading, () => state.writing.show], () => 
 
 export const setting = reactive<{
   baseUrl: string
-  outUrl: string
-  filePath: string
   encryptionKey: string
   previewIndex: number
   imageFileTree?: DirectoryTree
@@ -42,8 +38,6 @@ export const setting = reactive<{
   }[]
 }>({
   baseUrl: '',
-  outUrl: '',
-  filePath: '',
   encryptionKey: '',
   previewIndex: 0,
   imageFileTree: undefined,

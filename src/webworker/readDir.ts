@@ -5,6 +5,26 @@ const path_worker = require('path') as typeof import('path')
 
 const createMessage = (data: DirWorkerEvent): DirWorkerEvent => data
 
+const sort = (obj: DirectoryTree) => {
+  if (obj.children) {
+    obj.children.sort((a, b) => {
+      if (a.children !== undefined && b.children === undefined) {
+        return -1
+      }
+      if (a.children === undefined && b.children !== undefined) {
+        return 1
+      }
+      return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    })
+    for (const i in obj.children) {
+      if (obj.children[i].children) {
+        sort(obj.children[i])
+      }
+    }
+  }
+  return obj
+}
+
 self.onmessage = async (event: MessageEvent) => {
   const filePath = event.data
 
@@ -40,7 +60,7 @@ self.onmessage = async (event: MessageEvent) => {
     self.postMessage(
       createMessage({
         type: 'image',
-        data: imageFileTree
+        data: sort(imageFileTree)
       })
     )
   }
@@ -57,7 +77,7 @@ self.onmessage = async (event: MessageEvent) => {
     self.postMessage(
       createMessage({
         type: 'audio',
-        data: audioFileTree
+        data: sort(audioFileTree)
       })
     )
   }
@@ -86,6 +106,7 @@ const getFileTree = async (url: string, fn?: Function): Promise<DirectoryTree> =
       }
     } else {
       dirTree.disabled = true
+      dirTree.children = null
     }
     return dirTree
   } else {

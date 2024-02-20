@@ -1,7 +1,7 @@
 interface DirectoryTree {
   path: string
   name: string
-  children?: DirectoryTree[]
+  children?: DirectoryTree[] | null
   disabled?: boolean
 }
 

@@ -1,3 +1,4 @@
+import { getFilterList } from '@/assets/scripts/utils'
 import { reactive } from 'vue'
 
 export const state = reactive({
@@ -21,7 +22,6 @@ watch([() => state.ready, () => state.loading, () => state.writing.show], () => 
 export const setting = reactive<{
   baseUrl: string
   encryptionKey: string
-  previewIndex: number
   imageFileTree?: DirectoryTree
   imageFileList: {
     name: string
@@ -39,7 +39,6 @@ export const setting = reactive<{
 }>({
   baseUrl: '',
   encryptionKey: '',
-  previewIndex: 0,
   imageFileTree: undefined,
   imageFileList: [],
   audioFileTree: undefined,
@@ -47,17 +46,38 @@ export const setting = reactive<{
   filesList: []
 })
 
-watch(() => setting.encryptionKey, () => {
-  ipcRenderer.send('set-encryption', !!setting.encryptionKey)
-})
+watch(
+  () => setting.encryptionKey,
+  () => {
+    ipcRenderer.send('set-encryption', !!setting.encryptionKey)
+  }
+)
 
-export const previewItem = reactive({
-  type: 'img',
+export const preview = reactive<PreviewItem>({
+  type: 'image',
   name: '',
   path: '',
   text: ''
 })
 
-export const sidebar = reactive({
-  search: ''
+export const sidebar: {
+  search: string
+  select?: {
+    name: string
+    path: string
+  }
+  currentList: {
+    name: string
+    path: string
+  }[]
+} = reactive({
+  search: '',
+  select: {
+    name: '',
+    path: ''
+  },
+  currentList: computed(() => [
+    ...getFilterList(setting.imageFileTree, sidebar.search),
+    ...getFilterList(setting.audioFileTree, sidebar.search)
+  ])
 })

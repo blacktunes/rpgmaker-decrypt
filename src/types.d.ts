@@ -13,8 +13,8 @@ type DirWorkerEvent =
     }
   | {
       type: 'system'
-      key: string
-      title: string
+      key?: string
+      title?: string
     }
   | {
       type: 'count'
@@ -27,3 +27,10 @@ type DirWorkerEvent =
   | {
       type: 'done'
     }
+
+interface PreviewItem {
+  type: 'video' | 'image' | 'audio' | 'text' | 'other'
+  name: string
+  path: string
+  text: string
+}

@@ -9,6 +9,8 @@ declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     Home: typeof import('./src/components/Home.vue')['default']
     Loading: typeof import('./src/components/Loading.vue')['default']
+    NButton: typeof import('naive-ui')['NButton']
+    NCode: typeof import('naive-ui')['NCode']
     NIcon: typeof import('naive-ui')['NIcon']
     NInput: typeof import('naive-ui')['NInput']
     NNumberAnimation: typeof import('naive-ui')['NNumberAnimation']
@@ -16,10 +18,14 @@ declare module '@vue/runtime-core' {
     NProgress: typeof import('naive-ui')['NProgress']
     NSpin: typeof import('naive-ui')['NSpin']
     NSplit: typeof import('naive-ui')['NSplit']
+    NSwitch: typeof import('naive-ui')['NSwitch']
     NTag: typeof import('naive-ui')['NTag']
     NText: typeof import('naive-ui')['NText']
     NTree: typeof import('naive-ui')['NTree']
+    Preview: typeof import('./src/components/Home/Preview.vue')['default']
     SelectDir: typeof import('./src/components/SelectDir.vue')['default']
+    Sidear: typeof import('./src/components/Home/Sidear.vue')['default']
+    Sidebar: typeof import('./src/components/Home/Sidebar.vue')['default']
     SideBar: typeof import('./src/components/Home/SideBar.vue')['default']
   }
 }

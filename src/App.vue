@@ -79,7 +79,7 @@
 
 <script setup lang="ts">
 import Home from './components/Home.vue'
-import { state, previewItem } from './store'
+import { state } from './store'
 import { checkDir } from './assets/scripts/utils'
 
 const hover = ref(false)
@@ -88,8 +88,6 @@ const onDrop = (e: DragEvent) => {
   hover.value = false
   if (e.dataTransfer?.files?.[0]?.path) {
     checkDir(e.dataTransfer.files[0].path)
-    previewItem.name = ''
-    previewItem.path = ''
   }
 }
 

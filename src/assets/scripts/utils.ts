@@ -1,6 +1,6 @@
 import ReadDir from '@/webworker/readDir?worker'
 import { createDiscreteApi } from 'naive-ui'
-import { previewItem, setting, sidebar, state } from '../../store'
+import { preview, setting, sidebar, state } from '../../store'
 
 const readDirWorker = new ReadDir()
 
@@ -20,12 +20,11 @@ export const isLoading = () => state.loading
 export const isWriting = () => state.writing.show
 
 const reset = () => {
-  setting.previewIndex = setting.filesList.length
-
-  previewItem.name = ''
-  previewItem.path = ''
+  preview.name = ''
+  preview.path = ''
 
   sidebar.search = ''
+  sidebar.select = undefined
 }
 
 export const checkDir = async (url: string) => {
@@ -67,6 +66,7 @@ const loadDir = (url: string) => {
   state.loading = true
 
   setting.baseUrl = url
+  setting.encryptionKey = ''
   console.log(url)
 
   readDirWorker.postMessage(url)
@@ -83,8 +83,10 @@ const loadDir = (url: string) => {
         })
         break
       case 'system':
-        setting.encryptionKey = event.key
-        document.title = event.title
+        setting.encryptionKey = event.key || ''
+        if (event.title) {
+          document.title = event.title
+        }
         break
       case 'count':
         if (event.count === 'image') {
@@ -121,7 +123,7 @@ const loadDir = (url: string) => {
   }
 }
 
-export const getFileList = (obj?: DirectoryTree) => {
+export const getFilterList = (obj?: DirectoryTree, pattern: string = '') => {
   if (!obj) return []
   const { children, name, path } = obj
   let list: {
@@ -129,16 +131,17 @@ export const getFileList = (obj?: DirectoryTree) => {
     path: string
   }[] = []
   if (children) {
-    let i = children.length
-    while (i--) {
+    for (let i = 0; i < children.length; i++) {
       const child = children[i]
-      list = [...list, ...getFileList(child)]
+      list = [...list, ...getFilterList(child, pattern)]
     }
   } else {
-    list.push({
-      name,
-      path
-    })
+    if (!pattern.length || name.toLowerCase().includes(pattern.toLowerCase())) {
+      list.push({
+        name,
+        path
+      })
+    }
   }
   return list
 }

@@ -1,4 +1,10 @@
 {
+  "include": [
+    "*.d.ts",
+    "src/**/*",
+    "src/**/*.vue",
+    "src/**/*.json"
+  ],
   "compilerOptions": {
     "jsxImportSource": "vue",
     "jsx": "preserve",

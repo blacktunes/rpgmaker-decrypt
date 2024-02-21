@@ -1,21 +1,38 @@
-import { state, setting, sidebar } from '../../store'
+import { state, sidebar } from '../../store'
 
-document.onkeydown = e => {
-  if (state.ready && !state.loading && sidebar.search.length === 0) {
+document.onkeydown = (e) => {
+  if (state.ready && !state.loading && !state.writing.show) {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      const index = setting.previewIndex - 1
-      if (index >= 0) {
-        setting.previewIndex = index
+      if (!sidebar.currentList.length) return
+      const index = sidebar.currentList.findIndex((item) => item.path === sidebar.select?.path)
+      if (index === -1 || index + 1 === sidebar.currentList.length) {
+        sidebar.select = {
+          name: sidebar.currentList[0].name,
+          path: sidebar.currentList[0].path
+        }
       } else {
-        setting.previewIndex = setting.filesList.length - 1
+        const _index = index + 1
+        sidebar.select = {
+          name: sidebar.currentList[_index].name,
+          path: sidebar.currentList[_index].path
+        }
       }
     }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      const index = setting.previewIndex + 1
-      if (index < setting.filesList.length) {
-        setting.previewIndex = index
+      if (!sidebar.currentList.length) return
+      const index = sidebar.currentList.findIndex((item) => item.path === sidebar.select?.path)
+      if (index === -1 || index === 0) {
+        const _index = sidebar.currentList.length - 1
+        sidebar.select = {
+          name: sidebar.currentList[_index].name,
+          path: sidebar.currentList[_index].path
+        }
       } else {
-        setting.previewIndex = 0
+        const _index = index - 1
+        sidebar.select = {
+          name: sidebar.currentList[_index].name,
+          path: sidebar.currentList[_index].path
+        }
       }
     }
   }

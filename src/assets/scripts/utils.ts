@@ -150,6 +150,18 @@ export const getFilterList = (obj?: DirectoryTree, pattern: string = '') => {
   return list
 }
 
+export const saveCurrentFile = () => {
+  if (!preview.path) return
+
+  const link = document.createElement('a')
+  link.href = preview.path
+  link.download = preview.name
+    .replace(/\.(rpgmvp|png_)$/i, '.png')
+    .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
+    .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
+  link.click()
+}
+
 export const decryptBuffer = (arrayBuffer: ArrayBufferLike) => {
   const body = arrayBuffer.slice(16)
   const view = new DataView(body)

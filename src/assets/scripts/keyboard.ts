@@ -1,4 +1,5 @@
-import { state, sidebar } from '../../store'
+import { sidebar, state } from '../../store'
+import { saveCurrentFile } from './utils'
 
 document.onkeydown = (e) => {
   if (state.ready && !state.loading && !state.busy && !state.writing.show) {
@@ -17,7 +18,9 @@ document.onkeydown = (e) => {
           path: sidebar.currentList[_index].path
         }
       }
+      return
     }
+
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       if (!sidebar.currentList.length) return
       const index = sidebar.currentList.findIndex((item) => item.path === sidebar.select?.path)
@@ -34,6 +37,12 @@ document.onkeydown = (e) => {
           path: sidebar.currentList[_index].path
         }
       }
+      return
+    }
+
+    if (e.key === 's' && e.ctrlKey) {
+      saveCurrentFile()
+      return
     }
   }
 }

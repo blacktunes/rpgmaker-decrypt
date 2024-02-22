@@ -25,14 +25,19 @@
           </span>
         </div>
         <div class="btn save">
-          <NIcon
-            size="25"
-            color="#888"
-            @click="save"
-            v-show="preview.path"
-          >
-            <Save />
-          </NIcon>
+          <NTooltip trigger="hover">
+            <template #trigger>
+              <NIcon
+                size="25"
+                color="#888"
+                @click="saveCurrentFile"
+                v-show="preview.path"
+              >
+                <Save />
+              </NIcon>
+            </template>
+            <span>保存当前预览</span>
+          </NTooltip>
         </div>
       </div>
       <Preview
@@ -49,7 +54,7 @@ import Preview from './Home/Preview.vue'
 import { Menu, Save } from '@/components/Common/Icon'
 import { preview } from '@/store'
 import { emitter } from '@/assets/scripts/mitt'
-import { decryptBuffer } from '@/assets/scripts/utils'
+import { saveCurrentFile, decryptBuffer } from '@/assets/scripts/utils'
 
 const sideShow = ref(true)
 
@@ -86,16 +91,6 @@ const itemClick = (e: { name: string; path: string }) => {
     return
   }
   preview.type = 'other'
-}
-
-const save = () => {
-  const link = document.createElement('a')
-  link.href = preview.path
-  link.download = preview.name
-    .replace(/\.(rpgmvp|png_)$/i, '.png')
-    .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
-    .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
-  link.click()
 }
 
 const setPreview = (url: string, decode = false) => {

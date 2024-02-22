@@ -4,6 +4,11 @@ import { preview, setting, sidebar, state } from '../../store'
 
 const readDirWorker = new ReadDir()
 
+export const symbol = {
+  image: Symbol('img'),
+  audio: Symbol('audio')
+}
+
 export const { message, dialog, notification } = createDiscreteApi(
   ['message', 'dialog', 'notification'],
   {
@@ -102,11 +107,11 @@ const loadDir = (url: string) => {
         break
       case 'image':
         setting.imageFileTree = event.data
-        setting.imageFileTree.name = '图片'
+        setting.imageFileTree.root = symbol.image
         break
       case 'audio':
         setting.audioFileTree = event.data
-        setting.audioFileTree.name = '音频'
+        setting.audioFileTree.root = symbol.audio
         break
       case 'done':
         reset()

@@ -67,7 +67,15 @@ export const sidebar: {
     name: string
     path: string
   }
-  currentList: {
+  readonly currentImageList: {
+    name: string
+    path: string
+  }[]
+  readonly currentAudioList: {
+    name: string
+    path: string
+  }[]
+  readonly currentList: {
     name: string
     path: string
   }[]
@@ -77,8 +85,7 @@ export const sidebar: {
     name: '',
     path: ''
   },
-  currentList: computed(() => [
-    ...getFilterList(setting.imageFileTree, sidebar.search),
-    ...getFilterList(setting.audioFileTree, sidebar.search)
-  ])
+  currentImageList: computed(() => getFilterList(setting.imageFileTree, sidebar.search)),
+  currentAudioList: computed(() => getFilterList(setting.audioFileTree, sidebar.search)),
+  currentList: computed(() => [...sidebar.currentImageList, ...sidebar.currentAudioList])
 })

@@ -3,6 +3,7 @@ interface DirectoryTree {
   name: string
   children?: DirectoryTree[] | null
   disabled?: boolean
+  root?: symbol
 }
 
 type DirWorkerEvent =

@@ -22,6 +22,7 @@
       :node-props="nodeProps"
       :pattern="sidebar.search"
       :render-prefix="renderPrefix"
+      :render-label="renderLabel"
       :selected-keys="selectedKeys"
       :show-irrelevant-nodes="false"
       show-line
@@ -85,10 +86,11 @@
 </template>
 
 <script setup lang="tsx">
-import { NTree, NIcon } from 'naive-ui'
+import { NTree, NIcon, NTag } from 'naive-ui'
 import { Empty } from '@/components/Common/Icon'
 import { TreeOption } from 'naive-ui/es/tree/src/interface'
 import { setting, sidebar } from '@/store'
+import { symbol } from '@/assets/scripts/utils'
 import { emitter } from '@/assets/scripts/mitt'
 import {
   VerticalAlignTopOutlined,
@@ -245,6 +247,39 @@ const renderPrefix = ({ option }: { option: TreeOption }) => {
       </NIcon>
     )
   }
+}
+
+const renderLabel = ({ option }: { option: TreeOption }) => {
+  const name = option.name as string
+  if (option.root) {
+    if (option.root === symbol.image) {
+      return (
+        <>
+          图片
+          <NTag
+            size="small"
+            style="margin-left: 5px;pointer-events: none;"
+          >
+            {sidebar.currentImageList.length}
+          </NTag>
+        </>
+      )
+    }
+    if (option.root === symbol.audio) {
+      return (
+        <>
+          音频
+          <NTag
+            size="small"
+            style="margin-left: 5px;pointer-events: none;"
+          >
+            {sidebar.currentAudioList.length}
+          </NTag>
+        </>
+      )
+    }
+  }
+  return name
 }
 
 const selectedKeys = computed(() => (sidebar.select ? [sidebar.select.path] : []))

@@ -43,6 +43,7 @@ export const checkDir = async (url: string) => {
   }
   const filePath = path.join(url, _url)
   if (filePath === setting.baseUrl) {
+    state.busy = true
     dialog.info({
       title: '重新加载',
       content: '是否重新加载该目录',
@@ -51,6 +52,9 @@ export const checkDir = async (url: string) => {
       maskClosable: true,
       onPositiveClick: () => {
         loadDir(filePath)
+      },
+      onAfterLeave: () => {
+        state.busy = false
       }
     })
     return

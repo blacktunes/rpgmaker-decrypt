@@ -21,6 +21,7 @@ declare module '@vue/runtime-core' {
     NSwitch: typeof import('naive-ui')['NSwitch']
     NTag: typeof import('naive-ui')['NTag']
     NText: typeof import('naive-ui')['NText']
+    NTooltip: typeof import('naive-ui')['NTooltip']
     NTree: typeof import('naive-ui')['NTree']
     Preview: typeof import('./src/components/Home/Preview.vue')['default']
     SelectDir: typeof import('./src/components/SelectDir.vue')['default']

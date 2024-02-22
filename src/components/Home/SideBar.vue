@@ -5,7 +5,7 @@
       v-model:value="sidebar.search"
       placeholder="搜索"
       clearable
-      @keydown.esc="sidebar.search = ''"
+      @keydown.stop="resetSearch"
     />
     <NTree
       class="tree"
@@ -40,6 +40,47 @@
         </div>
       </template>
     </NTree>
+    <div class="button-list">
+      <NTooltip
+        trigger="hover"
+        class="tip"
+      >
+        <template #trigger>
+          <NIcon
+            depth="3"
+            class="btn"
+            @click="scrollTo('top')"
+          >
+            <VerticalAlignTopOutlined />
+          </NIcon>
+        </template>
+        <span>滚动到顶部</span>
+      </NTooltip>
+      <NTooltip trigger="hover">
+        <template #trigger>
+          <NIcon
+            depth="3"
+            class="btn"
+            @click="scrollTo('bottom')"
+          >
+            <VerticalAlignBottomOutlined />
+          </NIcon>
+        </template>
+        <span>滚动到底部</span>
+      </NTooltip>
+      <NTooltip trigger="hover">
+        <template #trigger>
+          <NIcon
+            depth="3"
+            class="btn"
+            @click="updateExpandedKeys([])"
+          >
+            <CollapseAll />
+          </NIcon>
+        </template>
+        <span>折叠文件夹</span>
+      </NTooltip>
+    </div>
   </div>
 </template>
 
@@ -50,13 +91,21 @@ import { TreeOption } from 'naive-ui/es/tree/src/interface'
 import { setting, sidebar } from '@/store'
 import { emitter } from '@/assets/scripts/mitt'
 import {
-  FolderOpenOutline,
-  Folder,
+  VerticalAlignTopOutlined,
+  VerticalAlignBottomOutlined,
+  CollapseAll,
+  FolderOutline,
+  FolderOpen,
   ImageOutline,
+  Image,
   VideocamOutline,
+  Videocam,
   SoundOutlined,
+  SoundFilled,
   DocumentTextOutline,
-  FileUnknownOutlined
+  DocumentText,
+  FileUnknownOutlined,
+  FileUnknownFilled
 } from '@/components/Common/Icon'
 
 const emit = defineEmits<{
@@ -68,6 +117,13 @@ const emit = defineEmits<{
     }
   ): void
 }>()
+
+const resetSearch = (e: KeyboardEvent) => {
+  if (e.code === 'Escape') {
+    sidebar.search = ''
+    ;(e.target as HTMLInputElement).blur()
+  }
+}
 
 const treeRef = ref<InstanceType<typeof NTree> | null>(null)
 
@@ -98,55 +154,97 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
 }
 
 const renderPrefix = ({ option }: { option: TreeOption }) => {
+  const key = option.path as string
+
   if (option.children !== undefined) {
-    if (expandedKeys.value.includes(option.path as string)) {
+    if (expandedKeys.value.includes(key)) {
       return (
         <NIcon>
-          <FolderOpenOutline />
+          <FolderOpen />
         </NIcon>
       )
     } else {
       return (
         <NIcon>
-          <Folder />
+          <FolderOutline />
         </NIcon>
       )
     }
   } else {
-    if (/\.(png|jpg|jpeg|webp|gif|rpgmvp|png_)$/i.test(option.path as string)) {
-      return (
-        <NIcon>
-          <ImageOutline />
-        </NIcon>
-      )
+    if (/\.(png|jpg|jpeg|webp|gif|rpgmvp|png_)$/i.test(key)) {
+      if (sidebar.select?.path === key) {
+        return (
+          <NIcon>
+            <Image />
+          </NIcon>
+        )
+      } else {
+        return (
+          <NIcon>
+            <ImageOutline />
+          </NIcon>
+        )
+      }
     }
-    if (/\.(webm|mp4|avi)$/i.test(option.path as string)) {
-      return (
-        <NIcon>
-          <VideocamOutline />
-        </NIcon>
-      )
+    if (/\.(webm|mp4|avi)$/i.test(key)) {
+      if (sidebar.select?.path === key) {
+        return (
+          <NIcon>
+            <Videocam />
+          </NIcon>
+        )
+      } else {
+        return (
+          <NIcon>
+            <VideocamOutline />
+          </NIcon>
+        )
+      }
     }
-    if (/\.(ogg|mp3|m4a|rpgmvo|ogg_|rpgmvm|m4a_)$/i.test(option.path as string)) {
-      return (
-        <NIcon>
-          <SoundOutlined />
-        </NIcon>
-      )
+    if (/\.(ogg|mp3|m4a|rpgmvo|ogg_|rpgmvm|m4a_)$/i.test(key)) {
+      if (sidebar.select?.path === key) {
+        return (
+          <NIcon>
+            <SoundFilled />
+          </NIcon>
+        )
+      } else {
+        return (
+          <NIcon>
+            <SoundOutlined />
+          </NIcon>
+        )
+      }
     }
-    if (/\.(txt|json)$/i.test(option.path as string)) {
-      return (
-        <NIcon>
-          <DocumentTextOutline />
-        </NIcon>
-      )
+    if (/\.(txt|json)$/i.test(key)) {
+      if (sidebar.select?.path === key) {
+        return (
+          <NIcon>
+            <DocumentText />
+          </NIcon>
+        )
+      } else {
+        return (
+          <NIcon>
+            <DocumentTextOutline />
+          </NIcon>
+        )
+      }
     }
   }
-  return (
-    <NIcon>
-      <FileUnknownOutlined />
-    </NIcon>
-  )
+  if (sidebar.select?.path === key) {
+    return (
+      <NIcon>
+        <FileUnknownFilled />
+      </NIcon>
+    )
+  } else {
+    return (
+      <NIcon>
+        <FileUnknownOutlined />
+      </NIcon>
+    )
+  }
 }
 
 const selectedKeys = computed(() => (sidebar.select ? [sidebar.select.path] : []))
@@ -184,10 +282,20 @@ watch(selectedKeys, () => {
   }
 })
 
+const scrollTo = (type: 'top' | 'bottom') => {
+  if (treeRef.value) {
+    treeRef.value.scrollTo({ position: type })
+  }
+}
+
 emitter.on('scrollToItem', setHighlight)
 </script>
 
 <style lang="stylus" scoped>
+.tip, .btn, span
+  user-select none
+  -webkit-user-drag none
+
 .sidebar
   overflow hidden
   box-sizing border-box
@@ -205,6 +313,24 @@ emitter.on('scrollToItem', setHighlight)
   .tree
     flex 1
     width 100%
+
+  .button-list
+    display flex
+    justify-content flex-end
+    align-items center
+    gap 2px
+    height 25px
+    padding 0 5px
+    background #eee
+
+    .btn
+      padding 2px
+      border-radius 2px
+      cursor pointer
+      background transparent
+
+      &:hover
+        background rgba(200, 200, 200, 0.5)
 
 .empty
   display flex

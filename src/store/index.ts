@@ -4,6 +4,7 @@ import { reactive } from 'vue'
 export const state = reactive({
   ready: false,
   loading: false,
+  busy: false,
   writing: {
     show: false,
     percentage: 0,

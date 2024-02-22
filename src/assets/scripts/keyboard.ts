@@ -1,7 +1,7 @@
 import { state, sidebar } from '../../store'
 
 document.onkeydown = (e) => {
-  if (state.ready && !state.loading && !state.writing.show) {
+  if (state.ready && !state.loading && !state.busy && !state.writing.show) {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       if (!sidebar.currentList.length) return
       const index = sidebar.currentList.findIndex((item) => item.path === sidebar.select?.path)

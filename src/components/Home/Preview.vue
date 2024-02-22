@@ -3,7 +3,6 @@
     <img
       v-if="item.type === 'image'"
       :src="item.path"
-      draggable="false"
     />
     <audio
       v-else-if="item.type === 'audio'"

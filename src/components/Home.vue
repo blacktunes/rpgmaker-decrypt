@@ -7,34 +7,33 @@
     />
     <div class="main">
       <div class="topbar">
-        <div class="switch">
+        <div class="btn switch">
           <NIcon
             size="25"
+            color="#888"
             @click="sideShow = !sideShow"
           >
             <Menu />
           </NIcon>
         </div>
         <div class="text">
-          <NTag
+          <span
             v-show="preview.name"
-            size="large"
-            round
-            style="cursor: pointer"
             @click.stop="emitter.emit('scrollToItem')"
           >
             {{ preview.name }}
-          </NTag>
+          </span>
         </div>
-        <NButton
-          @click="save"
-          v-show="preview.path"
-          circle
-        >
-          <template #icon>
+        <div class="btn save">
+          <NIcon
+            size="25"
+            color="#888"
+            @click="save"
+            v-show="preview.path"
+          >
             <Save />
-          </template>
-        </NButton>
+          </NIcon>
+        </div>
       </div>
       <Preview
         v-show="preview.path"
@@ -71,22 +70,12 @@ const itemClick = (e: { name: string; path: string }) => {
     setPreview(e.path, true)
     return
   }
-  if (/\.(ogg|mp3)$/i.test(e.name)) {
+  if (/\.(mp3|ogg|m4a)$/i.test(e.name)) {
     preview.type = 'audio'
     setPreview(e.path)
     return
   }
-  if (/\.(m4a)$/i.test(e.name)) {
-    preview.type = 'audio'
-    setPreview(e.path)
-    return
-  }
-  if (/\.(rpgmvo|ogg_)$/i.test(e.name)) {
-    preview.type = 'audio'
-    setPreview(e.path, true)
-    return
-  }
-  if (/\.(rpgmvm|m4a_)$/i.test(e.name)) {
+  if (/\.(rpgmvo|ogg_|rpgmvm|m4a_)$/i.test(e.name)) {
     preview.type = 'audio'
     setPreview(e.path, true)
     return
@@ -147,18 +136,32 @@ const setPreviewText = async (url: string) => {
         .switch
           opacity 1
 
-      .switch
+      .btn
         box-sizing border-box
         display flex
         align-items center
+        cursor pointer
+
+      .switch
         opacity 0.1
         transition 0.2s
-        cursor pointer
+
+      .save
+        padding 2px
+        border-radius 5px
+
+        &:hover
+          background rgba(200, 200, 200, 0.3)
 
       .text
         flex 1
         text-align center
         user-select none
+
+        span
+          color #888
+          font-weight bold
+          cursor pointer
 
 .sidebar-hide
   width 0

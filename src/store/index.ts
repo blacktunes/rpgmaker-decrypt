@@ -16,8 +16,20 @@ export const state = reactive({
   }
 })
 
-watch([() => state.ready, () => state.loading, () => state.writing.show], () => {
-  ipcRenderer.send('set-state', [state.ready, state.loading, state.writing.show])
+export const isReady = () => !!setting.baseUrl && state.ready
+
+export const isLoading = () => state.loading
+
+export const isWriting = () => state.writing.show
+
+export const isBusy = () => isLoading() || isWriting() || state.busy
+
+watch([() => state.ready, () => state.loading, () => state.writing.show, () => state.busy], () => {
+  const event: StateEvent = {
+    ready: isReady(),
+    busy: isBusy()
+  }
+  ipcRenderer.send('set-state', event)
 })
 
 export const setting = reactive<{
@@ -46,13 +58,6 @@ export const setting = reactive<{
   audioFileList: [],
   filesList: []
 })
-
-watch(
-  () => setting.encryptionKey,
-  () => {
-    ipcRenderer.send('set-encryption', !!setting.encryptionKey)
-  }
-)
 
 export const preview = reactive<PreviewItem>({
   type: 'image',
@@ -87,5 +92,14 @@ export const sidebar: {
   },
   currentImageList: computed(() => getFilterList(setting.imageFileTree, sidebar.search)),
   currentAudioList: computed(() => getFilterList(setting.audioFileTree, sidebar.search)),
-  currentList: computed(() => [...sidebar.currentImageList, ...sidebar.currentAudioList])
+  currentList: computed(() => {
+    const list = []
+    if (sidebar.currentImageList.length > 0) {
+      list.push(...sidebar.currentImageList)
+    }
+    if (sidebar.currentAudioList.length > 0) {
+      list.push(...sidebar.currentAudioList)
+    }
+    return list
+  })
 })

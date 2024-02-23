@@ -101,6 +101,7 @@ const onClick = () => {
 const percentage = computed(() => ((state.writing.percentage / state.writing.total) * 100) | 0)
 
 onMounted(() => {
+  window.onerror = null
   ipcRenderer.send('ready')
 })
 </script>

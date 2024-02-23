@@ -1,6 +1,6 @@
 import ReadDir from '@/webworker/readDir?worker'
 import { createDiscreteApi } from 'naive-ui'
-import { preview, setting, sidebar, state } from '../../store'
+import { preview, setting, sidebar, state } from '@/store'
 
 const readDirWorker = new ReadDir()
 
@@ -18,10 +18,9 @@ export const { message, dialog, notification } = createDiscreteApi(
   }
 )
 
-export const isReady = () => setting.baseUrl && state.ready
-
+// rm
+export const isReady = () => !!setting.baseUrl && state.ready
 export const isLoading = () => state.loading
-
 export const isWriting = () => state.writing.show
 
 const reset = () => {
@@ -93,6 +92,7 @@ const loadDir = (url: string) => {
         break
       case 'system':
         setting.encryptionKey = event.key || ''
+        ipcRenderer.send('set-encryption', !!setting.encryptionKey)
         if (event.title) {
           document.title = event.title
         }

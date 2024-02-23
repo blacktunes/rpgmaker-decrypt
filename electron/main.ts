@@ -1,3 +1,6 @@
+/// <reference types="./electron-env" />
+/// <reference types="../src/event" />
+
 process.env.DIST = join(__dirname, '../dist')
 process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST, '../public')
 
@@ -194,23 +197,32 @@ ipcMain.handle('select-dir', async () => {
   }
 })
 
-ipcMain.on('set-state', (_e, flag: [boolean, boolean, boolean]) => {
-  const [isReady, isLoading, isWriting] = flag
-  menu.getMenuItemById('load')!.enabled = !isLoading && !isWriting
-  menu.getMenuItemById('open-dir')!.enabled = isReady
-  menu.getMenuItemById('export-img')!.enabled = isReady && !isLoading && !isWriting
-  menu.getMenuItemById('export-audio')!.enabled = isReady && !isLoading && !isWriting
-  menu.getMenuItemById('export-all')!.enabled = isReady && !isLoading && !isWriting
-  menu.getMenuItemById('encryption')!.enabled = isReady && !isLoading && !isWriting
-  menu.getMenuItemById('decrypt-game')!.enabled = isReady && !isLoading && !isWriting
+let encryption = false
+
+// 改用对象
+ipcMain.on('set-state', (_e, event: StateEvent) => {
+  const { ready, busy } = event
+  menu.getMenuItemById('load')!.enabled = !busy
+  menu.getMenuItemById('open-dir')!.enabled = !busy
+  menu.getMenuItemById('export-img')!.enabled = ready && !busy
+  menu.getMenuItemById('export-audio')!.enabled = ready && !busy
+  menu.getMenuItemById('export-all')!.enabled = ready && !busy
+  menu.getMenuItemById('encryption')!.enabled = ready && !busy && encryption
+  menu.getMenuItemById('decrypt-game')!.enabled = ready && !busy && encryption
 })
 
 ipcMain.on('set-encryption', (_e, flag: boolean) => {
-  menu.getMenuItemById('encryption')!.enabled = flag
+  encryption = flag
 })
 
 ipcMain.on('ready', () => {
   win?.show()
+})
+
+ipcMain.on('error', (_e, error) => {
+  if (win?.isVisible()) return
+  dialog.showErrorBox('', error)
+  app.exit()
 })
 
 app.whenReady().then(createWindow)

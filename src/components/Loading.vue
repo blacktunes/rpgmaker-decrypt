@@ -1,31 +1,24 @@
 <template>
-  <Transition name="blur-fade">
+  <Transition name="popup-fade">
     <div
       class="loading"
       v-show="state.loading"
     >
-      <NSpin
-        :size="65"
-        stroke="#222"
-      >
+      <NSpin :size="200" :stroke="themeVars.successColor">
         <template #description>
           <div class="description">
-            <NTag round>
-              <template #icon>
-                <NIcon>
-                  <FileImageOutlined />
-                </NIcon>
-              </template>
+            <Tag
+              icon="image"
+              type="success"
+            >
               {{ state.count.image }}
-            </NTag>
-            <NTag round>
-              <template #icon>
-                <NIcon>
-                  <FileAudioRegular />
-                </NIcon>
-              </template>
+            </Tag>
+            <Tag
+              icon="audio"
+              type="success"
+            >
               {{ state.count.audio }}
-            </NTag>
+            </Tag>
           </div>
         </template>
       </NSpin>
@@ -35,7 +28,10 @@
 
 <script lang="ts" setup>
 import { state } from '@/store'
-import { FileImageOutlined, FileAudioRegular } from '@/components/Common/Icon'
+import Tag from './Common/Tag.vue'
+import { useThemeVars } from 'naive-ui'
+
+const themeVars = useThemeVars()
 </script>
 
 <style lang="stylus" scoped>
@@ -48,6 +44,7 @@ import { FileImageOutlined, FileAudioRegular } from '@/components/Common/Icon'
   justify-content center
   align-items center
   backdrop-filter blur(3px)
+  background rgba(0, 0, 0, 0.1)
 
 .description
   display flex

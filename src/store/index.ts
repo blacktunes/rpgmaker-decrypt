@@ -10,6 +10,17 @@ export const state = reactive({
     percentage: 0,
     total: 0
   },
+  save: {
+    show: false,
+    image: {
+      currnet: 0,
+      total: 0
+    },
+    audio: {
+      currnet: 0,
+      total: 0
+    }
+  },
   count: {
     image: 0,
     audio: 0
@@ -34,6 +45,7 @@ watch([() => state.ready, () => state.loading, () => state.writing.show, () => s
 
 export const setting = reactive<{
   baseUrl: string
+  gameTitle?: string
   encryptionKey: string
   imageFileTree?: DirectoryTree
   imageFileList: {
@@ -51,6 +63,7 @@ export const setting = reactive<{
   }[]
 }>({
   baseUrl: '',
+  gameTitle: '',
   encryptionKey: '',
   imageFileTree: undefined,
   imageFileList: [],

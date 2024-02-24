@@ -1,21 +1,6 @@
 <template>
   <Loading />
-  <Transition name="blur-fade">
-    <div
-      class="writing"
-      v-show="state.writing.show"
-    >
-      <NProgress
-        type="circle"
-        :percentage="percentage"
-        processing
-        color="#d03050"
-      />
-      <span style="text-align: center; color: #222">
-        {{ state.writing.percentage }}/{{ state.writing.total }}
-      </span>
-    </div>
-  </Transition>
+  <Progress />
   <div
     class="window"
     @drop="onDrop"
@@ -32,29 +17,7 @@
           size="100"
           color="#666"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            xmlns:xlink="http://www.w3.org/1999/xlink"
-            viewBox="0 0 24 24"
-          >
-            <g
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M19 11V9a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path>
-              <path d="M13 13l9 3l-4 2l-2 4l-3-9"></path>
-              <path d="M3 3v.01"></path>
-              <path d="M7 3v.01"></path>
-              <path d="M11 3v.01"></path>
-              <path d="M15 3v.01"></path>
-              <path d="M3 7v.01"></path>
-              <path d="M3 11v.01"></path>
-              <path d="M3 15v.01"></path>
-            </g>
-          </svg>
+          <DownloadingRound />
         </NIcon>
       </div>
     </Transition>
@@ -78,9 +41,9 @@
 </template>
 
 <script setup lang="ts">
-import Home from './components/Home.vue'
 import { state } from './store'
 import { checkDir } from './assets/scripts/utils'
+import { DownloadingRound } from './components/Common/Icon'
 
 const hover = ref(false)
 
@@ -98,8 +61,6 @@ const onClick = () => {
   })
 }
 
-const percentage = computed(() => ((state.writing.percentage / state.writing.total) * 100) | 0)
-
 onMounted(() => {
   window.onerror = null
   ipcRenderer.send('ready')
@@ -107,16 +68,6 @@ onMounted(() => {
 </script>
 
 <style lang="stylus" scoped>
-.loading, .writing
-  z-index 999
-  position fixed
-  inset 0
-  display flex
-  flex-direction column
-  justify-content center
-  align-items center
-  backdrop-filter blur(3px)
-
 .window
   position relative
 

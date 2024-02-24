@@ -1,8 +1,11 @@
-import ReadDir from '@/webworker/readDir?worker'
+import LoadFile from '@/webworker/LoadFile?worker'
+import SaveFile from '@/webworker/SaveFile?worker'
 import { createDiscreteApi } from 'naive-ui'
 import { preview, setting, sidebar, state } from '@/store'
+import { decryptBuffer, encryptionBuffer } from './encryption'
 
-const readDirWorker = new ReadDir()
+const loadFileWorker = new LoadFile()
+const saveFileWorker = new SaveFile()
 
 export const symbol = {
   image: Symbol('img'),
@@ -18,17 +21,38 @@ export const { message, dialog, notification } = createDiscreteApi(
   }
 )
 
-// rm
-export const isReady = () => !!setting.baseUrl && state.ready
-export const isLoading = () => state.loading
-export const isWriting = () => state.writing.show
-
 const reset = () => {
   preview.name = ''
   preview.path = ''
 
   sidebar.search = ''
   sidebar.select = undefined
+}
+
+export const getFilterList = (obj?: DirectoryTree, pattern: string = '') => {
+  if (!obj) return []
+  const { children, name, path } = obj
+  let list: {
+    name: string
+    path: string
+  }[] = []
+  if (children) {
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
+      list = [...list, ...getFilterList(child, pattern)]
+    }
+  } else {
+    if (
+      (!pattern.length || name.toLowerCase().includes(pattern.toLowerCase())) &&
+      children === undefined
+    ) {
+      list.push({
+        name,
+        path
+      })
+    }
+  }
+  return list
 }
 
 export const checkDir = async (url: string) => {
@@ -73,86 +97,68 @@ const loadDir = (url: string) => {
   state.count.audio = 0
   state.loading = true
 
-  setting.baseUrl = url
-  setting.encryptionKey = ''
   console.log(url)
 
-  readDirWorker.postMessage(url)
-
-  readDirWorker.onmessage = (e) => {
-    const event: DirWorkerEvent = e.data
+  loadFileWorker.onmessage = (e) => {
+    const event: LoadFileWorkerEvent = e.data
 
     switch (event.type) {
       case 'no-system':
         notification.error({
-          title: event.title,
-          content: event.content,
+          title: 'System.json不存在',
+          content: '加密文件将无法读取',
           duration: 3000
         })
         break
       case 'system':
-        setting.encryptionKey = event.key || ''
+        setting.encryptionKey = event.content.key || ''
         ipcRenderer.send('set-encryption', !!setting.encryptionKey)
-        if (event.title) {
-          document.title = event.title
+        setting.gameTitle = event.content.title
+        if (event.content.title) {
+          document.title = event.content.title
         }
         break
       case 'count':
-        if (event.count === 'image') {
+        if (event.content === 'image') {
           state.count.image += 1
         }
-        if (event.count === 'audio') {
+        if (event.content === 'audio') {
           state.count.audio += 1
         }
         break
       case 'image':
-        setting.imageFileTree = event.data
+        setting.imageFileTree = event.content
         setting.imageFileTree.root = symbol.image
         break
       case 'audio':
-        setting.audioFileTree = event.data
+        setting.audioFileTree = event.content
         setting.audioFileTree.root = symbol.audio
         break
       case 'done':
         reset()
+        setting.baseUrl = url
         state.ready = true
         state.loading = false
+        break
+      case 'error':
+        state.loading = false
+        notification.error({
+          title: '加载失败',
+          content: event.content.message,
+          duration: 3000
+        })
+        break
+      case 'message-error':
+        notification.error({
+          title: event.content.title,
+          content: event.content.message,
+          duration: 3000
+        })
         break
     }
   }
 
-  readDirWorker.onerror = (err) => {
-    state.ready = false
-    state.loading = false
-    notification.error({
-      title: '加载失败',
-      content: err.message,
-      duration: 3000
-    })
-  }
-}
-
-export const getFilterList = (obj?: DirectoryTree, pattern: string = '') => {
-  if (!obj) return []
-  const { children, name, path } = obj
-  let list: {
-    name: string
-    path: string
-  }[] = []
-  if (children) {
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i]
-      list = [...list, ...getFilterList(child, pattern)]
-    }
-  } else {
-    if (!pattern.length || name.toLowerCase().includes(pattern.toLowerCase())) {
-      list.push({
-        name,
-        path
-      })
-    }
-  }
-  return list
+  loadFileWorker.postMessage(url)
 }
 
 export const saveCurrentFile = () => {
@@ -165,28 +171,70 @@ export const saveCurrentFile = () => {
     .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
     .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
   link.click()
+  link.remove()
 }
 
-export const decryptBuffer = (arrayBuffer: ArrayBufferLike) => {
-  const body = arrayBuffer.slice(16)
-  const view = new DataView(body)
-  const key = setting.encryptionKey.match(/.{2}/g)!
-
-  for (let i = 0; i < 16; i++) {
-    view.setUint8(i, view.getUint8(i) ^ parseInt(key[i], 16))
+export const saveFile = (
+  dir: string,
+  type: 'image' | 'audio' | 'all' = 'all',
+  decrypt?: boolean,
+  backup?: boolean
+) => {
+  state.save.image.currnet = 0
+  state.save.image.total = 0
+  state.save.audio.currnet = 0
+  state.save.audio.total = 0
+  const filesList: {
+    image: BaseItem[]
+    audio: BaseItem[]
+  } = {
+    image: [],
+    audio: []
   }
-  return body
-}
-
-export const encryptionBuffer = (arrayBuffer: ArrayBufferLike) => {
-  const body = arrayBuffer
-  const view = new DataView(body)
-  const key = setting.encryptionKey.match(/.{2}/g)!
-
-  for (let i = 0; i < 16; i++) {
-    view.setUint8(i, view.getUint8(i) ^ parseInt(key[i], 16))
+  if (type === 'image') {
+    filesList.image = getFilterList(setting.imageFileTree)
+    state.save.image.total = filesList.image.length
+  } else if (type === 'audio') {
+    filesList.audio = getFilterList(setting.audioFileTree)
+    state.save.audio.total = filesList.audio.length
+  } else {
+    filesList.image = getFilterList(setting.imageFileTree)
+    state.save.image.total = filesList.image.length
+    filesList.audio = getFilterList(setting.audioFileTree)
+    state.save.audio.total = filesList.audio.length
   }
-  return Buffer.concat([Buffer.from(new ArrayBuffer(16)), Buffer.from(arrayBuffer)]).buffer
+  state.save.show = true
+
+  saveFileWorker.onmessage = (e) => {
+    const event: SaveFileWorkerEvent = e.data
+
+    switch (event.type) {
+      case 'progress':
+        state.save[event.content].currnet += 1
+        break
+      case 'done':
+        state.save.show = false
+        break
+      case 'error':
+        state.save.show = false
+        notification.error({
+          title: '保存失败',
+          content: event.content.message,
+          duration: 3000
+        })
+    }
+  }
+
+  const props: SaveFileWorkerProps = {
+    filesList,
+    dir,
+    baseUrl: setting.baseUrl,
+    encryptionKey: setting.encryptionKey,
+    gameTitle: setting.gameTitle,
+    decrypt,
+    backup
+  }
+  saveFileWorker.postMessage(props)
 }
 
 export const encryption = async (urls: string[]) => {
@@ -194,58 +242,15 @@ export const encryption = async (urls: string[]) => {
   state.writing.total = urls.length
   state.writing.show = true
   for (const url of urls) {
-    const res = new Uint8Array(encryptionBuffer((await fs.readFile(url)).buffer))
+    const res = new Uint8Array(
+      encryptionBuffer((await fs.readFile(url)).buffer, setting.encryptionKey)
+    )
     await fs.outputFile(path.join(url, '..', `${path.basename(url, path.extname(url))}._`), res)
     state.writing.percentage += 1
   }
   setTimeout(() => {
     state.writing.show = false
   }, 500)
-}
-
-export const saveFile = (dir: string, type: 'img' | 'audio' | 'all' = 'all') => {
-  state.writing.percentage = 0
-  let filesList: {
-    name: string
-    path: string
-  }[]
-  if (type === 'img') {
-    state.writing.total = setting.imageFileList.length
-    filesList = setting.imageFileList
-  } else if (type === 'audio') {
-    state.writing.total = setting.audioFileList.length
-    filesList = setting.audioFileList
-  } else {
-    state.writing.total = setting.filesList.length
-    filesList = setting.filesList
-  }
-  state.writing.show = true
-
-  setTimeout(async () => {
-    try {
-      for (const { name, path: filePath } of filesList) {
-        const outPath = filePath
-          .replace(setting.baseUrl, path.join(dir, `${document.title}-decrypt`))
-          .replace(/\.(rpgmvp|png_)$/i, '.png')
-          .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
-          .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
-        if (/\.(rpgmvo|ogg_|rpgmvm|m4a_|png_|rpgmvp)$/i.test(name)) {
-          const res = new Uint8Array(decryptBuffer((await fs.readFile(filePath)).buffer))
-          await fs.outputFile(outPath, res)
-        } else {
-          await fs.ensureDir(path.join(outPath, '..'))
-          await fs.copyFile(filePath, outPath)
-        }
-        state.writing.percentage += 1
-      }
-    } catch (err) {
-      state.writing.show = false
-      alert(err)
-    }
-    setTimeout(() => {
-      state.writing.show = false
-    }, 500)
-  }, 50)
 }
 
 export const decryptGame = () => {
@@ -288,7 +293,9 @@ export const _decryptGame = (backups: boolean) => {
             .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
             .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
           if (/\.(rpgmvo|ogg_|rpgmvm|m4a_|png_|rpgmvp)$/i.test(name)) {
-            const res = new Uint8Array(decryptBuffer((await fs.readFile(filePath)).buffer))
+            const res = new Uint8Array(
+              decryptBuffer((await fs.readFile(filePath)).buffer, setting.encryptionKey)
+            )
             await fs.outputFile(outPath, res)
           } else {
             await fs.ensureDir(path.join(outPath, '..'))
@@ -318,7 +325,9 @@ export const _decryptGame = (backups: boolean) => {
             .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
             .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
           if (/\.(rpgmvo|ogg_|rpgmvm|m4a_|png_|rpgmvp)$/i.test(name)) {
-            const res = new Uint8Array(decryptBuffer((await fs.readFile(filePath)).buffer))
+            const res = new Uint8Array(
+              decryptBuffer((await fs.readFile(filePath)).buffer, setting.encryptionKey)
+            )
             await fs.outputFile(outPath, res)
           } else {
             await fs.ensureDir(path.join(outPath, '..'))

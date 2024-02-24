@@ -52,9 +52,10 @@
 import Sidebar from './Home/Sidebar.vue'
 import Preview from './Home/Preview.vue'
 import { Menu, Save } from '@/components/Common/Icon'
-import { preview } from '@/store'
+import { preview, setting } from '@/store'
 import { emitter } from '@/assets/scripts/mitt'
-import { saveCurrentFile, decryptBuffer } from '@/assets/scripts/utils'
+import { saveCurrentFile } from '@/assets/scripts/utils'
+import { decryptBuffer } from '@/assets/scripts/encryption'
 
 const sideShow = ref(true)
 
@@ -96,7 +97,7 @@ const itemClick = (e: { name: string; path: string }) => {
 const setPreview = (url: string, decode = false) => {
   let buffer = fs.readFileSync(url).buffer
   if (decode) {
-    buffer = decryptBuffer(buffer)
+    buffer = decryptBuffer(buffer, setting.encryptionKey)
   }
   URL.revokeObjectURL(preview.path)
   preview.path = URL.createObjectURL(new Blob([buffer]))

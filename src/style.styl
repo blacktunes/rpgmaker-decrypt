@@ -45,3 +45,18 @@ img
 .blur-fade-enter-to, .blur-fade-leave-from
   opacity 1
   backdrop-filter blur(3px)
+
+.popup-fade-enter-active
+  transition 0.1s
+
+.popup-fade-leave-active
+  transition backdrop-filter 0.1s, opacity 0.25s
+  transition-delay 0.5s
+
+.popup-fade-enter-from, .popup-fade-leave-to
+  opacity 0
+  backdrop-filter blur(0)
+
+.popup-fade-enter-to, .popup-fade-leave-from
+  opacity 1
+  backdrop-filter blur(3px)

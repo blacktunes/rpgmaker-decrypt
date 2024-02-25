@@ -21,7 +21,7 @@
         <div
           v-else
           style="font-size: 30px"
-          :style="{ color: themeVars.iconColor }"
+          :style="{ color: themeVars.infoColor }"
         >
           {{ percentageText }}
         </div>

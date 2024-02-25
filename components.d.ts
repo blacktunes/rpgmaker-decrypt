@@ -7,6 +7,7 @@ export {}
 
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
+    DropView: typeof import('./src/components/DropView.vue')['default']
     Home: typeof import('./src/components/Home.vue')['default']
     Icon: typeof import('./src/components/Common/Icon.tsx')['default']
     Loading: typeof import('./src/components/Loading.vue')['default']

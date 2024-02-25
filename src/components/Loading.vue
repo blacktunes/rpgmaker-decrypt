@@ -4,18 +4,18 @@
       class="loading"
       v-show="state.loading"
     >
-      <NSpin :size="200" :stroke="themeVars.successColor">
+      <NSpin :size="200" :stroke="themeVars.infoColor">
         <template #description>
           <div class="description">
             <Tag
               icon="image"
-              type="success"
+              type="info"
             >
               {{ state.count.image }}
             </Tag>
             <Tag
               icon="audio"
-              type="success"
+              type="info"
             >
               {{ state.count.audio }}
             </Tag>

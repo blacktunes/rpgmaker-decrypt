@@ -1,38 +1,11 @@
 {
-  "include": [
-    "*.d.ts",
-    "src/**/*",
-    "src/**/*.vue",
-    "src/**/*.json"
-  ],
-  "compilerOptions": {
-    "jsxImportSource": "vue",
-    "jsx": "preserve",
-    "target": "ESNext",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": [
-      "ESNext",
-      "DOM"
-    ],
-    "moduleResolution": "Node",
-    "strict": true,
-    "sourceMap": true,
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "noEmit": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "skipLibCheck": true,
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
     },
-    "types": [
-      "vite-plugin-electron/electron-env",
-      "naive-ui/volar"
-    ]
-  }
+    {
+      "path": "./tsconfig.web.json"
+    }
+  ]
 }

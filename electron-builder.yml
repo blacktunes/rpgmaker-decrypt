@@ -1,14 +1,17 @@
-# https://www.electron.build/configuration/configuration
-asar: true
+productName: decrypt
 directories:
-  output: 'release/${productName}_${version}'
+  output: 'dist/${productName}_${version}'
 files:
-  - dist
-  - dist-electron
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+asarUnpack:
+  - resources/**
 win:
-  icon: public/icon.ico
-  target:
-    - target: dir
-      arch:
-        - x64
-  artifactName: '${productName}_${version}.${ext}'
+  icon: resources/icon.ico
+  executableName: decrypt
+electronDownload:
+  mirror: https://npmmirror.com/mirrors/electron/

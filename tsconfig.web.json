@@ -1,0 +1,24 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
+  "include": [
+    "src/renderer/src/env.d.ts",
+    "src/renderer/src/**/*",
+    "src/renderer/src/**/*.vue",
+    "src/renderer/auto-imports.d.ts",
+    "src/renderer/components.d.ts",
+    "src/main/event.d.ts",
+    "src/preload/*.d.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/renderer/src/*"
+      ]
+    }
+  },
+  "types": [
+    "naive-ui/volar"
+  ]
+}

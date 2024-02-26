@@ -33,10 +33,25 @@
       />
     </div>
     <div
-      v-else
-      class="unknow"
+      v-else-if="item.type === 'error'"
+      class="other"
     >
-      <NIcon size="30">
+      <NIcon
+        size="42"
+        color="#888"
+      >
+        <DocumentError24Regular />
+      </NIcon>
+      {{ preview.path }}
+    </div>
+    <div
+      v-else
+      class="other"
+    >
+      <NIcon
+        size="40"
+        color="#888"
+      >
         <FileUnknownOutlined />
       </NIcon>
       暂不支持的文件格式
@@ -47,7 +62,8 @@
 <script lang="ts" setup>
 import hljs from 'highlight.js/lib/core'
 import json from 'highlight.js/lib/languages/json'
-import { FileUnknownOutlined } from '../Common/Icon'
+import { DocumentError24Regular, FileUnknownOutlined } from '../Common/Icon'
+import { preview } from '@/store'
 
 hljs.registerLanguage('json', json)
 
@@ -79,11 +95,14 @@ defineProps<{
     background-image conic-gradient(#eee 0 25%, transparent 0 50%, #eee 0 75%, transparent 0)
     background-size 24px 24px
 
-  .unknow
+  .other
     display flex
     flex-direction column
     justify-content center
     align-items center
+    margin-bottom 50px
     gap 10px
+    color #888
+    font-weight bold
     user-select none
 </style>

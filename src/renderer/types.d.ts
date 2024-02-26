@@ -10,7 +10,7 @@ type DirectoryTree = BaseItem & {
 }
 
 interface PreviewItem {
-  type: 'video' | 'image' | 'audio' | 'text' | 'other'
+  type: 'video' | 'image' | 'audio' | 'text' | 'error' | 'other'
   name: string
   path: string
   text: string

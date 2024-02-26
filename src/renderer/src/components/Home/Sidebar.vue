@@ -150,10 +150,6 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
         name: option.name as string,
         path: option.path as string
       }
-      emit('itemClick', {
-        name: option.name as string,
-        path: option.path as string
-      })
     }
   }
 }

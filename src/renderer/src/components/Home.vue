@@ -28,13 +28,17 @@
           <NTooltip trigger="hover">
             <template #trigger>
               <NIcon
-                v-show="preview.path"
+                v-if="preview.path && preview.type !== 'error'"
                 size="25"
                 color="#888"
                 @click="saveCurrentFile"
               >
                 <Save />
               </NIcon>
+              <div
+                v-else
+                style="width: 25px"
+              ></div>
             </template>
             <span>保存当前预览</span>
           </NTooltip>
@@ -54,7 +58,7 @@ import Preview from './Home/Preview.vue'
 import { Menu, Save } from '@/components/Common/Icon'
 import { preview, setting } from '@/store'
 import { emitter } from '@/scripts/mitt'
-import { saveCurrentFile } from '@/scripts/utils'
+import { notification, saveCurrentFile } from '@/scripts/utils'
 
 const sideShow = ref(true)
 
@@ -94,12 +98,30 @@ const itemClick = (e: { name: string; path: string }) => {
 }
 
 const setPreview = (url: string, decode = false) => {
-  let buffer = fs.readFileSync(url).buffer
-  if (decode) {
-    buffer = decryptBuffer(buffer, setting.encryptionKey)
+  if (fs.pathExistsSync(url)) {
+    try {
+      let buffer = fs.readFileSync(url).buffer
+      if (decode) {
+        buffer = decryptBuffer(buffer, setting.encryptionKey)
+      }
+      URL.revokeObjectURL(preview.path)
+      preview.path = URL.createObjectURL(new Blob([buffer]))
+    } catch (err) {
+      console.error(err)
+
+      preview.path = '无法打开该文件'
+      preview.type = 'error'
+
+      notification.error({
+        title: '无法打开该文件',
+        content: (err as Error).message,
+        duration: 3000
+      })
+    }
+  } else {
+    preview.path = '文件不存在'
+    preview.type = 'error'
   }
-  URL.revokeObjectURL(preview.path)
-  preview.path = URL.createObjectURL(new Blob([buffer]))
 }
 
 const setPreviewText = async (url: string) => {

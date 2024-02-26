@@ -7,14 +7,11 @@ export const symbol = {
   audio: Symbol('audio')
 }
 
-export const { message, dialog, notification } = createDiscreteApi(
-  ['message', 'dialog', 'notification'],
-  {
-    notificationProviderProps: {
-      keepAliveOnHover: true
-    }
+export const { dialog, notification } = createDiscreteApi(['dialog', 'notification'], {
+  notificationProviderProps: {
+    keepAliveOnHover: true
   }
-)
+})
 
 const reset = () => {
   preview.name = ''
@@ -92,7 +89,7 @@ const loadFile = (url: string) => {
   state.count.audio = 0
   state.loading = true
 
-  console.log(url)
+  console.log('load:', url)
 
   ipcRenderer.send('load-file', url)
 }
@@ -124,6 +121,7 @@ export const handleLoadFile = (event: LoadFileWorkerEvent) => {
       break
     case 'done':
       reset()
+      console.log('baseUrl:', event.content.baseUrl)
       console.log('encryptionKey:', event.content.key)
       setting.baseUrl = event.content.baseUrl
       setting.encryptionKey = event.content.key || ''

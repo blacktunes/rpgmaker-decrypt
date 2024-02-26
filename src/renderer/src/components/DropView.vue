@@ -33,7 +33,7 @@
 
 <script lang="ts" setup>
 import { state } from '@/store'
-import { checkDir } from '@/assets/scripts/utils'
+import { checkDir } from '@/scripts/utils'
 import { DownloadingRound } from '@/components/Common/Icon'
 import { useThemeVars } from 'naive-ui'
 

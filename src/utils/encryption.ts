@@ -9,7 +9,10 @@ export const decryptBuffer = (arrayBuffer: ArrayBufferLike, encryptionKey: strin
   return body
 }
 
-export const encryptionBuffer = (arrayBuffer: ArrayBufferLike, encryptionKey: string) => {
+export const encryptionBuffer = (
+  arrayBuffer: ArrayBufferLike,
+  encryptionKey: string
+): ArrayBufferLike => {
   const body = arrayBuffer
   const view = new DataView(body)
   const key = encryptionKey.match(/.{2}/g)!

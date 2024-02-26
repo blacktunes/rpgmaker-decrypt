@@ -53,9 +53,8 @@ import Sidebar from './Home/Sidebar.vue'
 import Preview from './Home/Preview.vue'
 import { Menu, Save } from '@/components/Common/Icon'
 import { preview, setting } from '@/store'
-import { emitter } from '@/assets/scripts/mitt'
-import { saveCurrentFile } from '@/assets/scripts/utils'
-import { decryptBuffer } from '@/assets/scripts/encryption'
+import { emitter } from '@/scripts/mitt'
+import { saveCurrentFile } from '@/scripts/utils'
 
 const sideShow = ref(true)
 

@@ -2,6 +2,8 @@ import { is } from '@electron-toolkit/utils'
 import { BrowserWindow, Menu, app, dialog, ipcMain } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.ico?asset'
+import LoadFileWorker from './worker/LoadFile?nodeWorker'
+import SaveFileWorker from './worker/SaveFile?nodeWorker'
 import { createMenu } from './menu'
 
 const createWindow = () => {
@@ -54,10 +56,6 @@ const createWindow = () => {
     menu.getMenuItemById('decrypt-game')!.enabled = ready && !busy && encryption
   })
 
-  ipcMain.on('set-encryption', (_e, flag: boolean) => {
-    encryption = flag
-  })
-
   let start = false
   ipcMain.on('ready', () => {
     mainWindow.show()
@@ -72,7 +70,57 @@ const createWindow = () => {
     if (mainWindow.isVisible()) return
     dialog.showErrorBox('', error)
     app.exit()
-    process.exit()
+  })
+
+  ipcMain.on('load-file', (_e, url: string) => {
+    const worker = LoadFileWorker({})
+
+    worker.on('message', (event: LoadFileWorkerEvent) => {
+      mainWindow.webContents.send('load-file-event', event)
+      switch (event.type) {
+        case 'message-error':
+          if (is.dev) {
+            console.error(event.content)
+          }
+          break
+        case 'done':
+          encryption = !!event.content.key
+          worker.terminate()
+      }
+    })
+
+    worker.on('error', (err: Error) => {
+      console.error(err)
+      mainWindow.webContents.send('load-file-event', {
+        type: 'error',
+        content: err
+      })
+      worker.terminate()
+    })
+
+    worker.postMessage(url)
+  })
+
+  ipcMain.on('save-file', (_e, props: SaveFileWorkerProps) => {
+    const worker = SaveFileWorker({})
+
+    worker.on('message', (event: LoadFileWorkerEvent) => {
+      mainWindow.webContents.send('save-file-event', event)
+      if (event.type === 'done') {
+        worker.terminate()
+      }
+    })
+
+    worker.on('error', (err: Error) => {
+      console.error(err)
+      mainWindow.webContents.send('save-file-event', {
+        type: 'error',
+        content: err
+      })
+      worker.terminate()
+    })
+
+    worker.postMessage(props)
   })
 }
 

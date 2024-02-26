@@ -1,5 +1,12 @@
 import { setting } from '@/store'
-import { checkDir, decryptGame, encryption, saveFile } from './utils'
+import {
+  checkDir,
+  decryptGame,
+  encryption,
+  handLeSaveFile,
+  handleLoadFile,
+  saveFile
+} from './utils'
 
 ipcRenderer.on('select-new-dir', (_e, result: string) => {
   checkDir(result)
@@ -27,4 +34,12 @@ ipcRenderer.on('encryption', (_e, result: string[]) => {
 
 ipcRenderer.on('decrypt-game', () => {
   decryptGame()
+})
+
+ipcRenderer.on('load-file-event', (_e, event: LoadFileWorkerEvent) => {
+  handleLoadFile(event)
+})
+
+ipcRenderer.on('save-file-event', (_e, event: SaveFileWorkerEvent) => {
+  handLeSaveFile(event)
 })

@@ -1,9 +1,88 @@
-/// <reference lib="WebWorker" />
+/// <reference types="../../renderer/types" />
 
-const { pathExists, readJSON, stat, readdir } = require('fs-extra') as typeof import('fs-extra')
-const { join, basename } = require('path') as typeof import('path')
+import { parentPort } from 'worker_threads'
+
+import { pathExists, readJSON, stat, readdir } from 'fs-extra'
+import { join, basename } from 'path'
 
 const createMessage = (data: LoadFileWorkerEvent): LoadFileWorkerEvent => data
+
+if (parentPort) {
+  const parent = parentPort
+
+  parentPort.on('message', async (filePath: string) => {
+    let key: string | undefined
+    let title: string | undefined
+    const systemPath = join(filePath, 'data/System.json')
+    if (await pathExists(systemPath)) {
+      try {
+        const { encryptionKey, gameTitle } = await readJSON(systemPath)
+        key = encryptionKey
+        title = gameTitle
+      } catch (err) {
+        parent.postMessage(
+          createMessage({
+            type: 'message-error',
+            content: {
+              title: '无法加载System.json',
+              message: '文件可能被加密\n加密文件将无法读取'
+            }
+          })
+        )
+      }
+    } else {
+      parent.postMessage(
+        createMessage({
+          type: 'no-system'
+        })
+      )
+    }
+    if (await pathExists(join(filePath, 'img'))) {
+      const imageFileTree = await getFileTree(join(filePath, 'img'), () => {
+        parent.postMessage(
+          createMessage({
+            type: 'count',
+            content: 'image'
+          })
+        )
+      })
+      parent.postMessage(
+        createMessage({
+          type: 'image',
+          content: sort(imageFileTree)
+        })
+      )
+    }
+
+    if (await pathExists(join(filePath, 'img'))) {
+      const audioFileTree = await getFileTree(join(filePath, 'audio'), () => {
+        parent.postMessage(
+          createMessage({
+            type: 'count',
+            content: 'audio'
+          })
+        )
+      })
+      parent.postMessage(
+        createMessage({
+          type: 'audio',
+          content: sort(audioFileTree)
+        })
+      )
+    }
+
+    parent.postMessage(
+      createMessage({
+        type: 'done',
+        content: {
+          baseUrl: filePath,
+          key,
+          title
+        }
+      })
+    )
+  })
+}
 
 const sort = (obj: DirectoryTree) => {
   if (obj.children) {
@@ -23,93 +102,6 @@ const sort = (obj: DirectoryTree) => {
     }
   }
   return obj
-}
-
-self.onmessage = async (event: MessageEvent) => {
-  try {
-    const filePath: string = event.data
-
-    const systemPath = join(filePath, 'data/System.json')
-    if (await pathExists(systemPath)) {
-      try {
-        const { encryptionKey, gameTitle } = await readJSON(systemPath)
-        console.log(encryptionKey)
-        self.postMessage(
-          createMessage({
-            type: 'system',
-            content: {
-              key: encryptionKey,
-              title: gameTitle
-            }
-          })
-        )
-      } catch (err) {
-        console.error(err)
-        self.postMessage(
-          createMessage({
-            type: 'message-error',
-            content: {
-              title: '无法加载System.json',
-              message: '文件可能被加密\n加密文件将无法读取'
-            }
-          })
-        )
-      }
-    } else {
-      self.postMessage(
-        createMessage({
-          type: 'no-system'
-        })
-      )
-    }
-    if (await pathExists(join(filePath, 'img'))) {
-      const imageFileTree = await getFileTree(join(filePath, 'img'), () => {
-        self.postMessage(
-          createMessage({
-            type: 'count',
-            content: 'image'
-          })
-        )
-      })
-      self.postMessage(
-        createMessage({
-          type: 'image',
-          content: sort(imageFileTree)
-        })
-      )
-    }
-
-    if (await pathExists(join(filePath, 'img'))) {
-      const audioFileTree = await getFileTree(join(filePath, 'audio'), () => {
-        self.postMessage(
-          createMessage({
-            type: 'count',
-            content: 'audio'
-          })
-        )
-      })
-      self.postMessage(
-        createMessage({
-          type: 'audio',
-          content: sort(audioFileTree)
-        })
-      )
-    }
-
-    self.postMessage(
-      createMessage({
-        type: 'done'
-      })
-    )
-  } catch (err) {
-    console.error(err)
-    self.postMessage(
-      createMessage({
-        type: 'error',
-        content: err as Error
-      })
-    )
-  }
 }
 
 const getFileTree = async (url: string, fn?: () => void): Promise<DirectoryTree> => {
@@ -142,5 +134,3 @@ const getFileTree = async (url: string, fn?: () => void): Promise<DirectoryTree>
     }
   }
 }
-
-export {}

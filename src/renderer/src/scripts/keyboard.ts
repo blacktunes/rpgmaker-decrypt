@@ -1,4 +1,4 @@
-import { sidebar, state } from '../../store'
+import { sidebar, state } from '../store'
 import { saveCurrentFile } from './utils'
 
 document.onkeydown = (e) => {

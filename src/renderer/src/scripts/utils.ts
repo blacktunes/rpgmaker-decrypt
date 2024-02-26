@@ -1,8 +1,5 @@
-import LoadFile from '@/webworker/LoadFile?worker'
-import SaveFile from '@/webworker/SaveFile?worker'
 import { createDiscreteApi } from 'naive-ui'
 import { preview, setting, sidebar, state } from '@/store'
-import { encryptionBuffer } from './encryption'
 import { emitter } from './mitt'
 
 export const symbol = {
@@ -18,10 +15,6 @@ export const { message, dialog, notification } = createDiscreteApi(
     }
   }
 )
-
-const terminate = (worker: Worker) => {
-  worker.terminate()
-}
 
 const reset = () => {
   preview.name = ''
@@ -81,7 +74,7 @@ export const checkDir = async (url: string) => {
       negativeText: '否',
       maskClosable: true,
       onPositiveClick: () => {
-        loadDir(filePath)
+        loadFile(filePath)
       },
       onAfterLeave: () => {
         state.busy = false
@@ -89,10 +82,10 @@ export const checkDir = async (url: string) => {
     })
     return
   }
-  loadDir(filePath)
+  loadFile(filePath)
 }
 
-const loadDir = (url: string) => {
+const loadFile = (url: string) => {
   document.title = 'RPGMakerMV/MZ资源浏览器'
 
   state.count.image = 0
@@ -101,71 +94,63 @@ const loadDir = (url: string) => {
 
   console.log(url)
 
-  const worker = new LoadFile()
+  ipcRenderer.send('load-file', url)
+}
 
-  worker.onmessage = (e) => {
-    const event: LoadFileWorkerEvent = e.data
-
-    switch (event.type) {
-      case 'no-system':
-        notification.error({
-          title: 'System.json不存在',
-          content: '加密文件将无法读取',
-          duration: 3000
-        })
-        break
-      case 'system':
-        setting.encryptionKey = event.content.key || ''
-        ipcRenderer.send('set-encryption', !!setting.encryptionKey)
-        setting.gameTitle = event.content.title
-        if (event.content.title) {
-          document.title = event.content.title
-        }
-        break
-      case 'count':
-        if (event.content === 'image') {
-          state.count.image += 1
-        }
-        if (event.content === 'audio') {
-          state.count.audio += 1
-        }
-        break
-      case 'image':
-        setting.imageFileTree = event.content
-        setting.imageFileTree.root = symbol.image
-        break
-      case 'audio':
-        setting.audioFileTree = event.content
-        setting.audioFileTree.root = symbol.audio
-        break
-      case 'done':
-        reset()
-        setting.baseUrl = url
-        state.ready = true
-        state.loading = false
-        terminate(worker)
-        emitter.emit('reload')
-        break
-      case 'error':
-        state.loading = false
-        notification.error({
-          title: '加载失败',
-          content: event.content.message,
-          duration: 3000
-        })
-        terminate(worker)
-        break
-      case 'message-error':
-        notification.error({
-          title: event.content.title,
-          content: event.content.message,
-          duration: 3000
-        })
-        break
-    }
+export const handleLoadFile = (event: LoadFileWorkerEvent) => {
+  switch (event.type) {
+    case 'no-system':
+      notification.error({
+        title: 'System.json不存在',
+        content: '加密文件将无法读取',
+        duration: 3000
+      })
+      break
+    case 'count':
+      if (event.content === 'image') {
+        state.count.image += 1
+      }
+      if (event.content === 'audio') {
+        state.count.audio += 1
+      }
+      break
+    case 'image':
+      setting.imageFileTree = event.content
+      setting.imageFileTree.root = symbol.image
+      break
+    case 'audio':
+      setting.audioFileTree = event.content
+      setting.audioFileTree.root = symbol.audio
+      break
+    case 'done':
+      reset()
+      console.log('encryptionKey:', event.content.key)
+      setting.baseUrl = event.content.baseUrl
+      setting.encryptionKey = event.content.key || ''
+      setting.gameTitle = event.content.title
+      if (event.content.title) {
+        document.title = event.content.title
+      }
+      state.ready = true
+      state.loading = false
+      emitter.emit('reload')
+      break
+    case 'error':
+      state.loading = false
+      notification.error({
+        title: '加载失败',
+        content: event.content,
+        duration: 3000
+      })
+      break
+    case 'message-error':
+      notification.error({
+        title: event.content.title,
+        content: event.content.message,
+        duration: 3000
+      })
+      break
   }
-
-  worker.postMessage(url)
 }
 
 export const saveCurrentFile = () => {
@@ -211,34 +196,6 @@ export const saveFile = (
   }
   state.save.show = true
 
-  const worker = new SaveFile()
-
-  worker.onmessage = (e) => {
-    const event: SaveFileWorkerEvent = e.data
-
-    switch (event.type) {
-      case 'progress':
-        state.save[event.content].currnet += 1
-        break
-      case 'done':
-        state.save.show = false
-        if (!dir) {
-          setTimeout(() => {
-            loadDir(setting.baseUrl)
-          }, 500)
-        }
-        break
-      case 'error':
-        state.save.show = false
-        notification.error({
-          title: '保存失败',
-          content: event.content.message,
-          duration: 3000
-        })
-        terminate(worker)
-    }
-  }
-
   const props: SaveFileWorkerProps = {
     filesList,
     dir,
@@ -247,7 +204,30 @@ export const saveFile = (
     gameTitle: setting.gameTitle,
     backup
   }
-  worker.postMessage(props)
+  ipcRenderer.send('save-file', props)
+}
+
+export const handLeSaveFile = (event: SaveFileWorkerEvent) => {
+  switch (event.type) {
+    case 'progress':
+      state.save[event.content].currnet += 1
+      break
+    case 'done':
+      state.save.show = false
+      if (event.reload) {
+        setTimeout(() => {
+          loadFile(setting.baseUrl)
+        }, 500)
+      }
+      break
+    case 'error':
+      state.save.show = false
+      notification.error({
+        title: '保存失败',
+        content: event.content,
+        duration: 3000
+      })
+  }
 }
 
 export const encryption = async (urls: string[]) => {

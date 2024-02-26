@@ -90,8 +90,8 @@ import { NTree, NIcon, NTag } from 'naive-ui'
 import { Empty } from '@/components/Common/Icon'
 import { TreeOption } from 'naive-ui/es/tree/src/interface'
 import { setting, sidebar } from '@/store'
-import { symbol } from '@/assets/scripts/utils'
-import { emitter } from '@/assets/scripts/mitt'
+import { symbol } from '@/scripts/utils'
+import { emitter } from '@/scripts/mitt'
 import {
   VerticalAlignTopOutlined,
   VerticalAlignBottomOutlined,

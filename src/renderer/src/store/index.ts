@@ -1,4 +1,4 @@
-import { getFilterList } from '@/assets/scripts/utils'
+import { getFilterList } from '@/scripts/utils'
 import { reactive } from 'vue'
 
 export const state = reactive({

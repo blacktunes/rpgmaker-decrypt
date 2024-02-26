@@ -1,7 +1,16 @@
 /// <reference lib="WebWorker" />
+// @ts-ignore
+const fs = undefined
+// @ts-ignore
+const path = undefined
+// @ts-ignore
+const ipcRenderer = undefined
+// @ts-ignore
+const shell = undefined
+// 防止误用Electron注入的全局变量
 
-const fs_worker = require('fs-extra') as typeof import('fs-extra')
-const path_worker = require('path') as typeof import('path')
+const { exists, readJSON, stat, readdir } = require('fs-extra') as typeof import('fs-extra')
+const { join, basename } = require('path') as typeof import('path')
 
 const createMessage = (data: LoadFileWorkerEvent): LoadFileWorkerEvent => data
 
@@ -29,10 +38,10 @@ self.onmessage = async (event: MessageEvent) => {
   try {
     const filePath: string = event.data
 
-    const systemPath = path_worker.join(filePath, 'data/System.json')
-    if (await fs_worker.exists(systemPath)) {
+    const systemPath = join(filePath, 'data/System.json')
+    if (await exists(systemPath)) {
       try {
-        const { encryptionKey, gameTitle } = await fs_worker.readJSON(systemPath)
+        const { encryptionKey, gameTitle } = await readJSON(systemPath)
         console.log(encryptionKey)
         self.postMessage(
           createMessage({
@@ -62,8 +71,8 @@ self.onmessage = async (event: MessageEvent) => {
         })
       )
     }
-    if (await fs_worker.exists(path_worker.join(filePath, 'img'))) {
-      const imageFileTree = await getFileTree(path_worker.join(filePath, 'img'), () => {
+    if (await exists(join(filePath, 'img'))) {
+      const imageFileTree = await getFileTree(join(filePath, 'img'), () => {
         self.postMessage(
           createMessage({
             type: 'count',
@@ -79,8 +88,8 @@ self.onmessage = async (event: MessageEvent) => {
       )
     }
 
-    if (await fs_worker.exists(path_worker.join(filePath, 'img'))) {
-      const audioFileTree = await getFileTree(path_worker.join(filePath, 'audio'), () => {
+    if (await exists(join(filePath, 'img'))) {
+      const audioFileTree = await getFileTree(join(filePath, 'audio'), () => {
         self.postMessage(
           createMessage({
             type: 'count',
@@ -113,16 +122,16 @@ self.onmessage = async (event: MessageEvent) => {
 }
 
 const getFileTree = async (url: string, fn?: Function): Promise<DirectoryTree> => {
-  if (fs_worker.statSync(url).isDirectory()) {
-    const list = await fs_worker.readdir(url)
+  if ((await stat(url)).isDirectory()) {
+    const list = await readdir(url)
     const dirTree: DirectoryTree = {
-      name: path_worker.basename(url),
+      name: basename(url),
       path: url,
       children: []
     }
     if (list.length > 0) {
       for (const subUrl of list) {
-        const subItem = await getFileTree(path_worker.join(url, subUrl), fn)
+        const subItem = await getFileTree(join(url, subUrl), fn)
         if (subItem) {
           dirTree.children?.push(subItem)
         }
@@ -137,8 +146,10 @@ const getFileTree = async (url: string, fn?: Function): Promise<DirectoryTree> =
       fn()
     }
     return {
-      name: path_worker.basename(url),
+      name: basename(url),
       path: url
     }
   }
 }
+
+export {}

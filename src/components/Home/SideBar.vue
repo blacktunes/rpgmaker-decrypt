@@ -138,12 +138,9 @@ const expandedKeys = ref<string[]>([
   path.join(setting.baseUrl, 'img'),
   path.join(setting.baseUrl, 'audio')
 ])
-watch(
-  () => setting.baseUrl,
-  () => {
-    expandedKeys.value = [path.join(setting.baseUrl, 'img'), path.join(setting.baseUrl, 'audio')]
-  }
-)
+emitter.on('reload', () => {
+  expandedKeys.value = [path.join(setting.baseUrl, 'img'), path.join(setting.baseUrl, 'audio')]
+})
 
 const nodeProps = ({ option }: { option: TreeOption }) => {
   return {

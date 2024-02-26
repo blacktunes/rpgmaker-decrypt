@@ -60,11 +60,10 @@ interface SaveFileWorkerProps {
     image: BaseItem[]
     audio: BaseItem[]
   }
-  dir: string
+  dir?: string
   baseUrl: string
   encryptionKey: string
   gameTitle?: string
-  decrypt?: boolean
   backup?: boolean
 }
 

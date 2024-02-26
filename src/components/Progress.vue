@@ -76,7 +76,7 @@ const isSuccess = computed(() => percentage.value.every((item) => item >= 100))
   transition opacity 0.3s var(--n-bezier), stroke 0.3s var(--n-bezier)
 
 .saving
-  z-index 999
+  z-index 998
   position fixed
   inset 0
   display flex

@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
-import Fs from "fs-extra"
-import Path from "path"
-import Electron from "electron"
+import type Fs from 'fs-extra'
+import type Path from 'path'
+import type Electron from 'electron'
 
 declare global {
   const fs = Fs

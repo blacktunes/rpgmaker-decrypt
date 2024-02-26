@@ -2,10 +2,8 @@ import LoadFile from '@/webworker/LoadFile?worker'
 import SaveFile from '@/webworker/SaveFile?worker'
 import { createDiscreteApi } from 'naive-ui'
 import { preview, setting, sidebar, state } from '@/store'
-import { decryptBuffer, encryptionBuffer } from './encryption'
-
-const loadFileWorker = new LoadFile()
-const saveFileWorker = new SaveFile()
+import { encryptionBuffer } from './encryption'
+import { emitter } from './mitt'
 
 export const symbol = {
   image: Symbol('img'),
@@ -20,6 +18,10 @@ export const { message, dialog, notification } = createDiscreteApi(
     }
   }
 )
+
+const terminate = (worker: Worker) => {
+  worker.terminate()
+}
 
 const reset = () => {
   preview.name = ''
@@ -99,7 +101,9 @@ const loadDir = (url: string) => {
 
   console.log(url)
 
-  loadFileWorker.onmessage = (e) => {
+  const worker = new LoadFile()
+
+  worker.onmessage = (e) => {
     const event: LoadFileWorkerEvent = e.data
 
     switch (event.type) {
@@ -139,6 +143,8 @@ const loadDir = (url: string) => {
         setting.baseUrl = url
         state.ready = true
         state.loading = false
+        terminate(worker)
+        emitter.emit('reload')
         break
       case 'error':
         state.loading = false
@@ -147,6 +153,7 @@ const loadDir = (url: string) => {
           content: event.content.message,
           duration: 3000
         })
+        terminate(worker)
         break
       case 'message-error':
         notification.error({
@@ -158,7 +165,7 @@ const loadDir = (url: string) => {
     }
   }
 
-  loadFileWorker.postMessage(url)
+  worker.postMessage(url)
 }
 
 export const saveCurrentFile = () => {
@@ -175,9 +182,8 @@ export const saveCurrentFile = () => {
 }
 
 export const saveFile = (
-  dir: string,
+  dir?: string,
   type: 'image' | 'audio' | 'all' = 'all',
-  decrypt?: boolean,
   backup?: boolean
 ) => {
   state.save.image.currnet = 0
@@ -205,7 +211,9 @@ export const saveFile = (
   }
   state.save.show = true
 
-  saveFileWorker.onmessage = (e) => {
+  const worker = new SaveFile()
+
+  worker.onmessage = (e) => {
     const event: SaveFileWorkerEvent = e.data
 
     switch (event.type) {
@@ -214,6 +222,11 @@ export const saveFile = (
         break
       case 'done':
         state.save.show = false
+        if (!dir) {
+          setTimeout(() => {
+            loadDir(setting.baseUrl)
+          }, 500)
+        }
         break
       case 'error':
         state.save.show = false
@@ -222,6 +235,7 @@ export const saveFile = (
           content: event.content.message,
           duration: 3000
         })
+        terminate(worker)
     }
   }
 
@@ -231,10 +245,9 @@ export const saveFile = (
     baseUrl: setting.baseUrl,
     encryptionKey: setting.encryptionKey,
     gameTitle: setting.gameTitle,
-    decrypt,
     backup
   }
-  saveFileWorker.postMessage(props)
+  worker.postMessage(props)
 }
 
 export const encryption = async (urls: string[]) => {
@@ -254,6 +267,7 @@ export const encryption = async (urls: string[]) => {
 }
 
 export const decryptGame = () => {
+  state.busy = true
   dialog.info({
     title: '解密游戏',
     content: '是否保存图片和音频原文件',
@@ -261,108 +275,13 @@ export const decryptGame = () => {
     negativeText: '删除',
     maskClosable: true,
     onPositiveClick: () => {
-      _decryptGame(true)
+      saveFile(undefined, 'all', true)
     },
     onNegativeClick: () => {
-      _decryptGame(false)
+      saveFile(undefined, 'all', false)
+    },
+    onAfterLeave: () => {
+      state.busy = false
     }
   })
-}
-
-export const _decryptGame = (backups: boolean) => {
-  state.writing.percentage = 0
-  state.writing.show = true
-
-  setTimeout(async () => {
-    try {
-      const systemPath = path.join(setting.baseUrl, 'data/System.json')
-      await fs.copyFile(
-        path.join(setting.baseUrl, 'data/System.json'),
-        path.join(setting.baseUrl, 'data/System.json.bak')
-      )
-      const systemData = await fs.readJSON(systemPath)
-
-      if (systemData.hasEncryptedImages) {
-        state.writing.total += setting.imageFileList.length
-
-        for (const { name, path: filePath } of setting.imageFileList) {
-          const outPath = filePath
-            .replace(`${path.sep}img${path.sep}`, `${path.sep}_img_${path.sep}`)
-            .replace(`${path.sep}audio${path.sep}`, `${path.sep}_audio_${path.sep}`)
-            .replace(/\.(rpgmvp|png_)$/i, '.png')
-            .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
-            .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
-          if (/\.(rpgmvo|ogg_|rpgmvm|m4a_|png_|rpgmvp)$/i.test(name)) {
-            const res = new Uint8Array(
-              decryptBuffer((await fs.readFile(filePath)).buffer, setting.encryptionKey)
-            )
-            await fs.outputFile(outPath, res)
-          } else {
-            await fs.ensureDir(path.join(outPath, '..'))
-            await fs.copyFile(filePath, outPath)
-          }
-          state.writing.percentage += 1
-        }
-
-        if (backups) {
-          await fs.rename(path.join(setting.baseUrl, 'img'), path.join(setting.baseUrl, 'img.bak'))
-        } else {
-          await fs.remove(path.join(setting.baseUrl, 'img'))
-        }
-        await fs.rename(path.join(setting.baseUrl, '_img_'), path.join(setting.baseUrl, 'img'))
-
-        systemData.hasEncryptedImages = false
-      }
-
-      if (systemData.hasEncryptedAudio) {
-        state.writing.total += setting.audioFileList.length
-
-        for (const { name, path: filePath } of setting.audioFileList) {
-          const outPath = filePath
-            .replace(`${path.sep}img${path.sep}`, `${path.sep}_img_${path.sep}`)
-            .replace(`${path.sep}audio${path.sep}`, `${path.sep}_audio_${path.sep}`)
-            .replace(/\.(rpgmvp|png_)$/i, '.png')
-            .replace(/\.(rpgmvo|ogg_)$/i, '.ogg')
-            .replace(/\.(rpgmvm|m4a_)$/i, '.m4a')
-          if (/\.(rpgmvo|ogg_|rpgmvm|m4a_|png_|rpgmvp)$/i.test(name)) {
-            const res = new Uint8Array(
-              decryptBuffer((await fs.readFile(filePath)).buffer, setting.encryptionKey)
-            )
-            await fs.outputFile(outPath, res)
-          } else {
-            await fs.ensureDir(path.join(outPath, '..'))
-            await fs.copyFile(filePath, outPath)
-          }
-          state.writing.percentage += 1
-        }
-
-        if (backups) {
-          await fs.rename(
-            path.join(setting.baseUrl, 'audio'),
-            path.join(setting.baseUrl, 'audio.bak')
-          )
-        } else {
-          await fs.remove(path.join(setting.baseUrl, 'audio'))
-        }
-        await fs.rename(path.join(setting.baseUrl, '_audio_'), path.join(setting.baseUrl, 'audio'))
-
-        systemData.hasEncryptedAudio = false
-      }
-
-      await fs.writeJSON(systemPath, systemData)
-
-      if (await fs.exists(path.join(setting.baseUrl, 'nw.dll'))) {
-        await fs.writeFile(path.join(setting.baseUrl, 'Game.rmmzproject'), 'RPGMZ 1.4.3')
-      } else {
-        await fs.writeFile(path.join(setting.baseUrl, 'Game.rpgproject'), 'RPGMV 1.6.1')
-      }
-    } catch (err) {
-      state.writing.show = false
-      alert(err)
-    }
-    setTimeout(() => {
-      state.writing.show = false
-      checkDir(setting.baseUrl)
-    }, 500)
-  }, 50)
 }

@@ -1,4 +1,4 @@
-productName: decrypt
+productName: RPGMakerDecrypt
 directories:
   output: 'dist/${productName}_${version}'
 files:

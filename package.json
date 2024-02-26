@@ -1,6 +1,6 @@
 {
   "name": "rpgmaker-decrypt",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "RPGMakerMV/MZ资源浏览器",
   "main": "./out/main/index.js",
   "author": "blacktunes",

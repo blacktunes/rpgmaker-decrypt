@@ -164,15 +164,23 @@ export const saveCurrentFile = () => {
   link.remove()
 }
 
+const resetProgressState = () => {
+  state.save.error = false
+  state.save.image.currnet = 0
+  state.save.image.total = 0
+  state.save.audio.currnet = 0
+  state.save.audio.total = 0
+  state.save.encryption.currnet = 0
+  state.save.encryption.total = 0
+}
+
 export const saveFile = (
   dir?: string,
   type: 'image' | 'audio' | 'all' = 'all',
   backup?: boolean
 ) => {
-  state.save.image.currnet = 0
-  state.save.image.total = 0
-  state.save.audio.currnet = 0
-  state.save.audio.total = 0
+  resetProgressState()
+
   const filesList: {
     image: BaseItem[]
     audio: BaseItem[]
@@ -205,7 +213,7 @@ export const saveFile = (
   ipcRenderer.send('save-file', props)
 }
 
-export const handLeSaveFile = (event: SaveFileWorkerEvent) => {
+export const handleSaveFile = async (event: SaveFileWorkerEvent) => {
   switch (event.type) {
     case 'progress':
       state.save[event.content].currnet += 1
@@ -219,6 +227,8 @@ export const handLeSaveFile = (event: SaveFileWorkerEvent) => {
       }
       break
     case 'error':
+      state.save.error = true
+      await nextTick()
       state.save.show = false
       notification.error({
         title: '保存失败',
@@ -229,19 +239,30 @@ export const handLeSaveFile = (event: SaveFileWorkerEvent) => {
 }
 
 export const encryption = async (urls: string[]) => {
-  state.writing.percentage = 0
-  state.writing.total = urls.length
-  state.writing.show = true
-  for (const url of urls) {
-    const res = new Uint8Array(
-      encryptionBuffer((await fs.readFile(url)).buffer, setting.encryptionKey)
-    )
-    await fs.outputFile(path.join(url, '..', `${path.basename(url, path.extname(url))}._`), res)
-    state.writing.percentage += 1
+  resetProgressState()
+
+  state.save.show = true
+  state.save.encryption.total = urls.length
+
+  try {
+    for (const url of urls) {
+      const res = new Uint8Array(
+        encryptionBuffer((await fs.readFile(url)).buffer, setting.encryptionKey)
+      )
+      await fs.outputFile(path.join(url, '..', `${path.basename(url)}_`), res)
+      state.save.encryption.currnet += 1
+      await nextTick()
+    }
+  } catch (err) {
+    state.save.error = true
+    await nextTick()
+    notification.error({
+      content: (err as Error).message,
+      duration: 3000
+    })
+  } finally {
+    state.save.show = false
   }
-  setTimeout(() => {
-    state.writing.show = false
-  }, 500)
 }
 
 export const decryptGame = () => {

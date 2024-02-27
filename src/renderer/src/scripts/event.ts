@@ -3,7 +3,7 @@ import {
   checkDir,
   decryptGame,
   encryption,
-  handLeSaveFile,
+  handleSaveFile,
   handleLoadFile,
   saveFile
 } from './utils'
@@ -41,5 +41,5 @@ ipcRenderer.on('load-file-event', (_e, event: LoadFileWorkerEvent) => {
 })
 
 ipcRenderer.on('save-file-event', (_e, event: SaveFileWorkerEvent) => {
-  handLeSaveFile(event)
+  handleSaveFile(event)
 })

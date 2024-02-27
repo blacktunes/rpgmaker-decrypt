@@ -6,13 +6,20 @@
     >
       <NProgress
         type="multiple-circle"
-        :status="isSuccess ? 'success' : 'info'"
+        :status="state.save.error ? 'error' : isSuccess ? 'success' : 'info'"
         :circle-gap="3"
         :percentage="percentage"
         processing
       >
         <NIcon
-          v-if="isSuccess"
+          v-if="state.save.error"
+          size="60"
+          :color="themeVars.errorColor"
+        >
+          <ErrorCircleRound />
+        </NIcon>
+        <NIcon
+          v-else-if="isSuccess"
           size="60"
           :color="themeVars.successColor"
         >
@@ -30,16 +37,40 @@
         <Tag
           v-show="state.save.image.total"
           icon="image"
-          :type="state.save.image.currnet >= state.save.image.total ? 'success' : 'info'"
+          :type="
+            state.save.error
+              ? 'error'
+              : state.save.image.currnet >= state.save.image.total
+                ? 'success'
+                : 'info'
+          "
         >
           {{ state.save.image.currnet }}/{{ state.save.image.total }}
         </Tag>
         <Tag
           v-show="state.save.audio.total"
           icon="audio"
-          :type="state.save.audio.currnet >= state.save.audio.total ? 'success' : 'info'"
+          :type="
+            state.save.error
+              ? 'error'
+              : state.save.audio.currnet >= state.save.audio.total
+                ? 'success'
+                : 'info'
+          "
         >
           {{ state.save.audio.currnet }}/{{ state.save.audio.total }}
+        </Tag>
+        <Tag
+          v-show="state.save.encryption.total"
+          :type="
+            state.save.error
+              ? 'error'
+              : state.save.encryption.currnet >= state.save.encryption.total
+                ? 'success'
+                : 'info'
+          "
+        >
+          {{ state.save.encryption.currnet }}/{{ state.save.encryption.total }}
         </Tag>
       </div>
     </div>
@@ -48,7 +79,7 @@
 
 <script lang="ts" setup>
 import { state } from '@/store'
-import { CheckCircleRound } from './Common/Icon'
+import { CheckCircleRound, ErrorCircleRound } from './Common/Icon'
 import Tag from './Common/Tag.vue'
 import { useThemeVars } from 'naive-ui'
 
@@ -65,6 +96,9 @@ const percentage = computed(() => {
   }
   if (state.save.audio.total) {
     list.push(((state.save.audio.currnet / state.save.audio.total) * 100) | 0)
+  }
+  if (state.save.encryption.total) {
+    list.push(((state.save.encryption.currnet / state.save.encryption.total) * 100) | 0)
   }
   return list
 })

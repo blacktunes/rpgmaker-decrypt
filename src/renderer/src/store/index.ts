@@ -5,18 +5,18 @@ export const state = reactive({
   ready: false,
   loading: false,
   busy: false,
-  writing: {
-    show: false,
-    percentage: 0,
-    total: 0
-  },
   save: {
     show: false,
+    error: false,
     image: {
       currnet: 0,
       total: 0
     },
     audio: {
+      currnet: 0,
+      total: 0
+    },
+    encryption: {
       currnet: 0,
       total: 0
     }
@@ -31,11 +31,11 @@ export const isReady = () => !!setting.baseUrl && state.ready
 
 export const isLoading = () => state.loading
 
-export const isWriting = () => state.writing.show
+export const isSaving = () => state.save.show
 
-export const isBusy = () => isLoading() || isWriting() || state.busy
+export const isBusy = () => isLoading() || isSaving() || state.busy
 
-watch([() => state.ready, () => state.loading, () => state.writing.show, () => state.busy], () => {
+watch([() => state.ready, () => state.loading, () => state.save.show, () => state.busy], () => {
   const event: StateEvent = {
     ready: isReady(),
     busy: isBusy()
@@ -48,28 +48,13 @@ export const setting = reactive<{
   gameTitle?: string
   encryptionKey: string
   imageFileTree?: DirectoryTree
-  imageFileList: {
-    name: string
-    path: string
-  }[]
   audioFileTree?: DirectoryTree
-  audioFileList: {
-    name: string
-    path: string
-  }[]
-  filesList: {
-    name: string
-    path: string
-  }[]
 }>({
   baseUrl: '',
   gameTitle: '',
   encryptionKey: '',
   imageFileTree: undefined,
-  imageFileList: [],
-  audioFileTree: undefined,
-  audioFileList: [],
-  filesList: []
+  audioFileTree: undefined
 })
 
 export const preview = reactive<PreviewItem>({

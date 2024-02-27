@@ -8,7 +8,6 @@
       v-else-if="item.type === 'audio'"
       :src="item.path"
       autoplay
-      loop
       controls
       controlslist="nodownload nofullscreen noplaybackrate"
     ></audio>

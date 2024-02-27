@@ -1,4 +1,4 @@
-import { type BrowserWindow, Menu, dialog } from 'electron'
+import { type BrowserWindow, Menu, dialog, shell } from 'electron'
 
 export const createMenu = (win: BrowserWindow) => {
   return Menu.buildFromTemplate([
@@ -69,7 +69,7 @@ export const createMenu = (win: BrowserWindow) => {
       ]
     },
     {
-      label: '其它',
+      label: '解密',
       submenu: [
         {
           id: 'encryption',
@@ -120,6 +120,23 @@ export const createMenu = (win: BrowserWindow) => {
           label: '控制台',
           accelerator: 'F12',
           role: 'toggleDevTools'
+        }
+      ]
+    },
+    {
+      label: '关于',
+      submenu: [
+        {
+          label: '赞助',
+          click: () => {
+            shell.openExternal('https://afdian.net/a/blacktune')
+          }
+        },
+        {
+          label: 'Github',
+          click: () => {
+            shell.openExternal('https://github.com/blacktunes/rpgmaker-decrypt')
+          }
         }
       ]
     }

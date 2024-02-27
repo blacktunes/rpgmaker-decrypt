@@ -129,9 +129,15 @@ const resetSearch = (e: KeyboardEvent) => {
 
 const treeRef = ref<InstanceType<typeof NTree> | null>(null)
 
-const data = computed(() => [setting.imageFileTree || {}, setting.audioFileTree || {}])
-watch(data, () => {
-  expandedKeys.value = [path.join(setting.baseUrl, 'img')]
+const data = computed(() => {
+  const list: DirectoryTree[] = []
+  if (setting.imageFileTree) {
+    list.push(setting.imageFileTree)
+  }
+  if (setting.audioFileTree) {
+    list.push(setting.audioFileTree)
+  }
+  return list as unknown as TreeOption[]
 })
 
 const expandedKeys = ref<string[]>([
@@ -146,6 +152,7 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
   return {
     onClick() {
       if (option.children !== undefined) return
+      if (option.path === sidebar.select?.path) return
       sidebar.select = {
         name: option.name as string,
         path: option.path as string

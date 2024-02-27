@@ -64,6 +64,8 @@ const sideShow = ref(true)
 
 const itemClick = (e: { name: string; path: string }) => {
   preview.name = e.name
+  preview.path = ''
+  preview.text = ''
   if (/\.(webm|mp4|avi)$/i.test(e.name)) {
     preview.type = 'video'
     setPreview(e.path)
@@ -95,17 +97,32 @@ const itemClick = (e: { name: string; path: string }) => {
     return
   }
   preview.type = 'other'
+  preview.path = 'other'
 }
 
-const setPreview = (url: string, decode = false) => {
-  if (fs.pathExistsSync(url)) {
+const setPreview = async (url: string, decode = false) => {
+  checkFile(url, async () => {
+    let buffer = (await fs.readFile(url)).buffer
+    if (decode) {
+      buffer = decryptBuffer(buffer, setting.encryptionKey)
+    }
+    URL.revokeObjectURL(preview.path)
+    preview.path = URL.createObjectURL(new Blob([buffer]))
+  })
+}
+
+const setPreviewText = async (url: string) => {
+  checkFile(url, async () => {
+    const text = await fs.readFile(url, 'utf-8')
+    preview.text = text
+    preview.path = url
+  })
+}
+
+const checkFile = async (url: string, cb: () => Promise<void>) => {
+  if (await fs.pathExists(url)) {
     try {
-      let buffer = fs.readFileSync(url).buffer
-      if (decode) {
-        buffer = decryptBuffer(buffer, setting.encryptionKey)
-      }
-      URL.revokeObjectURL(preview.path)
-      preview.path = URL.createObjectURL(new Blob([buffer]))
+      await cb()
     } catch (err) {
       console.error(err)
 
@@ -122,11 +139,6 @@ const setPreview = (url: string, decode = false) => {
     preview.path = '文件不存在'
     preview.type = 'error'
   }
-}
-
-const setPreviewText = async (url: string) => {
-  const text = await fs.readFile(url, 'utf-8')
-  preview.text = text
 }
 </script>
 

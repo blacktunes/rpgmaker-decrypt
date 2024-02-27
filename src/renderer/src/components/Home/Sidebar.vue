@@ -90,7 +90,7 @@ import { NTree, NIcon, NTag } from 'naive-ui'
 import { Empty } from '@/components/Common/Icon'
 import { TreeOption } from 'naive-ui/es/tree/src/interface'
 import { setting, sidebar } from '@/store'
-import { symbol } from '@/scripts/utils'
+import { symbol, isImage, isVideo, isAudio, isText } from '@/scripts/utils'
 import { emitter } from '@/scripts/mitt'
 import {
   VerticalAlignTopOutlined,
@@ -179,7 +179,7 @@ const renderPrefix = ({ option }: { option: TreeOption }) => {
       )
     }
   } else {
-    if (/\.(png|jpg|jpeg|webp|gif|rpgmvp|png_)$/i.test(key)) {
+    if (isImage(key)) {
       if (sidebar.select?.path === key) {
         return (
           <NIcon>
@@ -194,7 +194,7 @@ const renderPrefix = ({ option }: { option: TreeOption }) => {
         )
       }
     }
-    if (/\.(webm|mp4|avi)$/i.test(key)) {
+    if (isVideo(key)) {
       if (sidebar.select?.path === key) {
         return (
           <NIcon>
@@ -209,7 +209,7 @@ const renderPrefix = ({ option }: { option: TreeOption }) => {
         )
       }
     }
-    if (/\.(ogg|mp3|m4a|rpgmvo|ogg_|rpgmvm|m4a_)$/i.test(key)) {
+    if (isAudio(key)) {
       if (sidebar.select?.path === key) {
         return (
           <NIcon>
@@ -224,7 +224,7 @@ const renderPrefix = ({ option }: { option: TreeOption }) => {
         )
       }
     }
-    if (/\.(txt|json)$/i.test(key)) {
+    if (isText(key)) {
       if (sidebar.select?.path === key) {
         return (
           <NIcon>
@@ -342,6 +342,7 @@ emitter.on('scrollToItem', setHighlight)
   box-sizing border-box
   display flex
   flex-direction column
+  flex-shrink 0
   width 350px
   height 100%
   border-right 2px solid rgba(200, 200, 200, 0.4)

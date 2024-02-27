@@ -2,6 +2,15 @@ import { createDiscreteApi } from 'naive-ui'
 import { preview, setting, sidebar, state } from '@/store'
 import { emitter } from './mitt'
 
+export const isVideo = (name: string) => /\.(webm|mp4|avi)$/i.test(name)
+export const isUnencryptedImage = (name: string) => /\.(png|jpg|jpeg|webp|gif)$/i.test(name)
+export const isEncryptedImage = (name: string) => /\.(rpgmvp|png_)$/i.test(name)
+export const isImage = (name: string) => isEncryptedImage(name) || isUnencryptedImage(name)
+export const isUnencryptedAudio = (name: string) => /\.(ogg|mp3|m4a)$/i.test(name)
+export const isEncryptedAudio = (name: string) => /\.(rpgmvo|ogg_|rpgmvm|m4a_)$/i.test(name)
+export const isAudio = (name: string) => isEncryptedAudio(name) || isUnencryptedAudio(name)
+export const isText = (name: string) => /\.(txt|json|js)$/i.test(name)
+
 export const symbol = {
   image: Symbol('img'),
   audio: Symbol('audio')

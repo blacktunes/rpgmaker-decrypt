@@ -26,9 +26,10 @@
       class="text"
     >
       <NCode
+        :key="item.path"
         :code="item.text"
-        language="json"
         :hljs="hljs"
+        :language="extname"
         show-line-numbers
       />
     </div>
@@ -42,7 +43,7 @@
       >
         <DocumentError24Regular />
       </NIcon>
-      {{ preview.path }}
+      {{ item.path }}
     </div>
     <div
       v-else
@@ -62,14 +63,24 @@
 <script lang="ts" setup>
 import hljs from 'highlight.js/lib/core'
 import json from 'highlight.js/lib/languages/json'
+import js from 'highlight.js/lib/languages/javascript'
 import { DocumentError24Regular, FileUnknownOutlined } from '../Common/Icon'
-import { preview } from '@/store'
 
 hljs.registerLanguage('json', json)
+hljs.registerLanguage('js', js)
 
-defineProps<{
+const props = defineProps<{
   item: PreviewItem
+  error?: string
 }>()
+
+const extname = computed(() => {
+  const ext = path.extname(props.item.name).slice(1)
+  if (hljs.getLanguage(ext)) {
+    return ext
+  }
+  return 'json'
+})
 </script>
 
 <style lang="stylus" scoped>

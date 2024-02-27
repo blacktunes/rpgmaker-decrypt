@@ -1,7 +1,6 @@
 <template>
   <div class="home">
     <Sidebar
-      class="sidebar"
       :class="{ 'sidebar-hide': !sideShow }"
       @item-click="itemClick"
     />
@@ -58,7 +57,16 @@ import Preview from './Home/Preview.vue'
 import { Menu, Save } from '@/components/Common/Icon'
 import { preview, setting } from '@/store'
 import { emitter } from '@/scripts/mitt'
-import { notification, saveCurrentFile } from '@/scripts/utils'
+import {
+  notification,
+  saveCurrentFile,
+  isVideo,
+  isText,
+  isEncryptedAudio,
+  isEncryptedImage,
+  isUnencryptedAudio,
+  isUnencryptedImage
+} from '@/scripts/utils'
 
 const sideShow = ref(true)
 
@@ -66,32 +74,32 @@ const itemClick = (e: { name: string; path: string }) => {
   preview.name = e.name
   preview.path = ''
   preview.text = ''
-  if (/\.(webm|mp4|avi)$/i.test(e.name)) {
+  if (isVideo(e.name)) {
     preview.type = 'video'
     setPreview(e.path)
     return
   }
-  if (/\.(png|jpg|jpeg|webp|gif)$/i.test(e.name)) {
+  if (isUnencryptedImage(e.name)) {
     preview.type = 'image'
     setPreview(e.path)
     return
   }
-  if (/\.(rpgmvp|png_)$/i.test(e.name)) {
+  if (isEncryptedImage(e.name)) {
     preview.type = 'image'
     setPreview(e.path, true)
     return
   }
-  if (/\.(mp3|ogg|m4a)$/i.test(e.name)) {
+  if (isUnencryptedAudio(e.name)) {
     preview.type = 'audio'
     setPreview(e.path)
     return
   }
-  if (/\.(rpgmvo|ogg_|rpgmvm|m4a_)$/i.test(e.name)) {
+  if (isEncryptedAudio(e.name)) {
     preview.type = 'audio'
     setPreview(e.path, true)
     return
   }
-  if (/\.(txt|json)$/i.test(e.name)) {
+  if (isText(e.name)) {
     preview.type = 'text'
     setPreviewText(e.path)
     return
@@ -113,7 +121,12 @@ const setPreview = async (url: string, decode = false) => {
 
 const setPreviewText = async (url: string) => {
   checkFile(url, async () => {
-    const text = await fs.readFile(url, 'utf-8')
+    let text = await fs.readFile(url, 'utf-8')
+    try {
+      text = JSON.stringify(JSON.parse(text), undefined, 2)
+    } catch {
+      // 不是JSON
+    }
     preview.text = text
     preview.path = url
   })
@@ -149,6 +162,7 @@ const checkFile = async (url: string, cb: () => Promise<void>) => {
   width 100vw
 
   .main
+    overflow hidden
     flex 1
     height 100%
     display flex

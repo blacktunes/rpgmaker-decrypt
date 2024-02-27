@@ -28,6 +28,11 @@ const reset = () => {
 
   sidebar.search = ''
   sidebar.select = undefined
+
+  setting.baseUrl = ''
+  setting.encryptionKey = ''
+  setting.imageFileTree = undefined
+  setting.audioFileTree = undefined
 }
 
 export const getFilterList = (obj?: DirectoryTree, pattern: string = '') => {
@@ -100,18 +105,12 @@ const loadFile = (url: string) => {
 
   console.log('load:', url)
 
+  reset()
   ipcRenderer.send('load-file', url)
 }
 
 export const handleLoadFile = (event: LoadFileWorkerEvent) => {
   switch (event.type) {
-    case 'no-system':
-      notification.error({
-        title: 'System.json不存在',
-        content: '加密文件将无法读取',
-        duration: 3000
-      })
-      break
     case 'count':
       if (event.content === 'image') {
         state.count.image += 1
@@ -129,15 +128,28 @@ export const handleLoadFile = (event: LoadFileWorkerEvent) => {
       setting.audioFileTree.root = symbol.audio
       break
     case 'done':
-      reset()
+      if (!setting.audioFileTree && !setting.audioFileTree) {
+        notification.warning({
+          title: '未发现游戏资源',
+          content: '该目录可能不是RM游戏目录',
+          duration: 3000
+        })
+        state.loading = false
+        state.ready = false
+        return
+      }
+
       console.log('baseUrl:', event.content.baseUrl)
       console.log('encryptionKey:', event.content.key)
+
       setting.baseUrl = event.content.baseUrl
       setting.encryptionKey = event.content.key || ''
+
       setting.gameTitle = event.content.title
       if (event.content.title) {
         document.title = event.content.title
       }
+
       state.ready = true
       state.loading = false
       emitter.emit('reload')
@@ -147,6 +159,13 @@ export const handleLoadFile = (event: LoadFileWorkerEvent) => {
       notification.error({
         title: '加载失败',
         content: event.content,
+        duration: 3000
+      })
+      break
+    case 'message-warning':
+      notification.warning({
+        title: event.content.title,
+        content: event.content.message,
         duration: 3000
       })
       break

@@ -22,7 +22,7 @@ if (parentPort) {
       } catch (err) {
         parent.postMessage(
           createMessage({
-            type: 'message-error',
+            type: 'message-warning',
             content: {
               title: '无法加载System.json',
               message: '文件可能被加密\n加密文件将无法读取'
@@ -33,7 +33,11 @@ if (parentPort) {
     } else {
       parent.postMessage(
         createMessage({
-          type: 'no-system'
+          type: 'message-warning',
+          content: {
+            title: '未找到System.json',
+            message: '加密文件将无法读取'
+          }
         })
       )
     }

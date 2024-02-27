@@ -9,6 +9,13 @@ type WorkerEvent =
       content: string
     }
   | {
+      type: 'message-warning'
+      content: {
+        title?: string
+        message: string
+      }
+    }
+  | {
       type: 'message-error'
       content: {
         title?: string
@@ -18,9 +25,6 @@ type WorkerEvent =
 
 type LoadFileWorkerEvent =
   | WorkerEvent
-  | {
-      type: 'no-system'
-    }
   | {
       type: 'count'
       content: 'image' | 'audio'

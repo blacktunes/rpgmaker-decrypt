@@ -19,7 +19,7 @@ export const createMenu = (win: BrowserWindow) => {
         },
         {
           id: 'open-dir',
-          label: '打开游戏目录',
+          label: '打开当前目录',
           enabled: false,
           click: () => {
             win.webContents.send('open-dir')
